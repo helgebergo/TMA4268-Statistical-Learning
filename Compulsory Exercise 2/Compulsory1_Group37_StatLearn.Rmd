@@ -96,20 +96,30 @@ plot(reg.summary$cp,xlab="Number of variables",ylab="Cp")
 
 points(which.min(reg.summary$cp),reg.summary$cp[which.min(reg.summary$cp)],pch=20,col="red")
 coef(regfit.fwd,10)
+
 ```
  
 
 ```{r}
-val.errors = rep(NA,19)
+val.errors = rep(NA,18)
 x.test = model.matrix(Outstate~.,data=college.test) # notice the -index!
-for (i in 1:19) {
+for (i in 1:18) {
     coefi = coef(regfit.fwd,id=i)
     pred=x.test[,names(coefi)]%*%coefi
     val.errors[i] = mean((college.test$Outstate-pred)^2)
 }
-plot(sqrt(val.errors),ylab="Root MSE",ylim=c(300,400),pch=19,type="b")
+plot(sqrt(val.errors),ylab="Root MSE",pch=19,type="b")
 points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
 legend("topright",legend=c("Training","Validation"),col=c("blue","black"),pch=19)
+```
+
+```{r}
+predict.regsubsets = function(object,newdata,id,...){
+    form=as.formula(object$call[[2]])
+    mat=model.matrix(form,newdata)
+    coefi=coef(object,id=id)
+    mat[,names(coefi)]%*%coefi
+}
 ```
 
 

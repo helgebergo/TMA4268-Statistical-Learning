@@ -7,6 +7,8 @@ output:
     pdf_document
     # html_document
     #word_document: default
+editor_options: 
+  chunk_output_type: console
 ---
   
 ```{r setup, include=FALSE}
@@ -85,10 +87,31 @@ Write down the model and report the MSE on the test set.
 
 ```{r}
 library(leaps)
-regfit.fwd = regsubsets(Outstate~.,data=college.train,method="forward")
-summary(regfit.fwd)
+regfit.fwd = regsubsets(Outstate~.,data=college.train,method="forward", nvmax = 18)
+reg.summary = summary(regfit.fwd)
+
+plot(regfit.fwd,scale="Cp")
+
+plot(reg.summary$cp,xlab="Number of variables",ylab="Cp")
+
+points(which.min(reg.summary$cp),reg.summary$cp[which.min(reg.summary$cp)],pch=20,col="red")
+coef(regfit.fwd,10)
 ```
  
+
+```{r}
+val.errors = rep(NA,19)
+x.test = model.matrix(Outstate~.,data=college.test) # notice the -index!
+for (i in 1:19) {
+    coefi = coef(regfit.fwd,id=i)
+    pred=x.test[,names(coefi)]%*%coefi
+    val.errors[i] = mean((college.test$Outstate-pred)^2)
+}
+plot(sqrt(val.errors),ylab="Root MSE",ylim=c(300,400),pch=19,type="b")
+points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
+legend("topright",legend=c("Training","Validation"),col=c("blue","black"),pch=19)
+```
+
 
 ## e) (2p)
 
@@ -262,7 +285,7 @@ id <- "1VfVCQvWt121UN39NXZ4aR9Dmsbj-p9OU" # google file ID
 GeneData <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id),header=F)
 colnames(GeneData)[1:20] = paste(rep("H", 20), c(1:20), sep = "")
 colnames(GeneData)[21:40] = paste(rep("D", 20), c(1:20), sep = "")
-row.names(GeneData) = paste(rep("G", 1000), c(1:1000), sep = "")
+# row.names(GeneData) = paste(rep("G", 1000), c(1:1000), sep = "")
 ```
 
 

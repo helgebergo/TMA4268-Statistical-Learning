@@ -1,0 +1,420 @@
+---
+subtitle: "TMA4268 Statistical Learning V2019"
+title: "Compulsory exercise 1: Group 37"
+author: "Anders Bendiksen and Helge Bergo"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+    pdf_document: default
+    #html_document: default
+    #word_document: default
+  # html_document
+  #pdf_document
+  #html_notebook
+---
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,tidy=TRUE,message=FALSE,warning=FALSE,strip.white=TRUE,prompt=FALSE,
+                      cache=TRUE, size="scriptsize",fig.width=4, fig.height=3)
+
+```
+
+```{r,eval=TRUE,echo=FALSE}
+# install.packages("knitr") #probably already installed
+# install.packages("rmarkdown") #probably already installed
+# install.packages("ggplot2") #plotting with ggplot
+# install.packages("ggfortify")  
+# install.packages("MASS")  
+# install.packages("dplyr")  
+library(knitr)
+library(rmarkdown)
+library(ggplot2)
+library(ggfortify)
+library(MASS)
+library(dplyr)
+```
+
+
+# Problem 1
+
+## a)
+
+The mean squared error(MSE) for the function $\hat{f}(x_i)$ is
+
+\begin{equation}
+  MSE_{train} = \frac{1}{n} \sum_{i=1}^{n} (Y_{i}-\hat{f}(x_{i}))^2
+\end{equation}
+
+This gives the MSE at x$_0$
+
+\begin{equation}
+  E[y_0-\hat{f}(x_i)]^2
+\end{equation}
+
+## b)
+
+The expected MSE from above is decomposed to the terms irreducible error, the variance of prediction and the squared bias.
+
+\begin{align}
+    E[y_0-\hat{f}(x_0)]^2 &= E [(y_0 - E(\hat{f}(x_0))- \hat{f}(x_0))^2] \\
+    &= [(y_0 - E(y_0))^2 + 2 ((y_0 - E(y_0))(E(y_0) - \hat{f}(x_0)) (E(y_0)-\hat{f}(x_0))^2] \\
+    &= E[(y_0-E(y_0))^2] + E[(E(y_0) - \hat{f}(x_0))^2] + \epsilon \\
+    &= Var(\epsilon) + Var(\hat{f}(x_0) ) + (f(x_0) - E[\hat{f}(x_0)])^2
+\end{align}
+
+## c)
+
+\textbf{Irreducible error:} The error that cannot be reduced, regardless
+how well our statistical model fits the given data.
+
+\textbf{Variance of the prediction:} The amount $\hat{f}(x_0)$ is expected to change for different sets of training data. Higher variance means higher uncertainty for the prediction. 
+
+\textbf{Squared bias:} An estimate of how much the prediction differs from the true mean. A lower bias gives a prediction closer to the true value. 
+
+
+## d)
+
+(i)   TRUE
+(ii)  FALSE
+(iii) TRUE
+(iv)  TRUE
+
+## e)
+
+(i)   TRUE
+(ii)  FALSE
+(iii) FALSE
+(iv)  TRUE
+
+## f)
+
+(ii) 0.17
+
+## g)
+
+Plot D, since it is a countour plot with $\sigma_x=1$, $\sigma_y=2$ and $\rho=0.1$. 
+
+
+# Problem 2
+
+```{r, eval=TRUE, echo=TRUE}
+id <- "1nLen1ckdnX4P9n8ShZeU7zbXpLc7qiwt" # google file ID
+d.worm <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
+#head(d.worm) not shown here
+str(d.worm)
+```
+
+## a)
+
+The dimensions are 5x143, the qualitative variables are `Gattung` and `Fangdatum`, and the quantitative variables are `Nummer`, `Gewicht` and `Magenumf`.
+
+## b) 
+
+```{r 2b, eval=TRUE, echo=TRUE, fig.align='center'}
+d.worm$Gattung <- as.factor(d.worm$Gattung)
+ggplot(d.worm, mapping=aes(x=MAGENUMF,y=GEWICHT,colour=Gattung)) + geom_point() + theme_bw()
+```
+
+Here we see the simple linear model where `Magenumf` is plotted against `Gewicht`. It is clear that the relationship is not linear, so a logarithmic fit was tried instead. 
+
+
+```{r, eval=TRUE, echo=TRUE, fig.align='center'}
+ggplot(d.worm, mapping=aes(x=log(MAGENUMF),y=log(GEWICHT),colour=Gattung)) + geom_point() + theme_bw()
+```
+
+We also tried to plot the relationship with only the log of `Gewicht`, and not `Magenumf`, as shown below. This seems like the best fit so far. 
+
+
+```{r, eval=TRUE, echo=TRUE, fig.align='center'}
+ggplot(d.worm, mapping=aes(x=MAGENUMF,y=log(GEWICHT),colour=Gattung)) + geom_point() + theme_bw()
+
+```
+
+
+## c)
+
+Using the transformed version of the variables with log(`GEWICHT`) as output, the regression model was fitted with `Magenumf` and `Gattung` as factors. 
+
+```{r, eval=TRUE, echo=TRUE, fig.align='center'}
+lm.fitFactor = lm(log(GEWICHT) ~ MAGENUMF + Gattung, data=d.worm)
+summary(lm.fitFactor)
+
+```
+When using `Gattung` as a factor, Gattung L becomes the main factor, and the total model become
+
+$$ y = 0.712M + 0.178*G_1 - 0.091*G_2 - 2.536, $$
+where $G_1$ is species N, and $G_2$ is species Oc. 
+
+Separating these into three different equations, we get the following. 
+$$ y_L = 0.712M - 2.536, $$
+$$ y_N = 0.712M + 0.178*G_1 - 2.536, $$
+$$ y_{Oc} = 0.712M - 0.091*G_2 - 2.536, $$
+
+`Gattung` is not a relevant predictor, as the P values for GattungN and GattungOc are very high. This means that it is not significant for the model. 
+
+```{r, eval=FALSE, echo=FALSE}
+lm.fitLog = lm(data = d.worm, MAGENUMF ~ log(GEWICHT))
+summary(lm.fitLog)
+anova(lm.fitFactor)
+
+```
+
+
+## d)
+
+To test `Gattung` as an interaction term, the model was fitted again. 
+
+```{r 2d, eval=TRUE, echo=TRUE }
+d.worm$Gattung <- as.factor(d.worm$Gattung)
+lm.fitInteraction=lm(data=d.worm, log(GEWICHT) ~ MAGENUMF * Gattung)
+summary(lm.fitInteraction)
+anova(lm.fitInteraction)
+```
+
+From this, it can be seen that the interaction term is not that significant, and can be neglected in the model, according to the low P values. 
+
+## e)
+
+The model was plotted using `autoplot()`, without the interaction term. 
+```{r 2e, eval=TRUE, echo=TRUE, fig.align='center' }
+
+lm.fit = lm(data = d.worm, log(GEWICHT) ~ MAGENUMF)
+summary(lm.fit)
+autoplot(lm.fit)
+anova(lm.fit)
+
+```
+
+It seems like the linearity assumptions are not met, since there is a pattern in the residual plot. 
+The normal distribution assumption also seems to be true, as the Q-Q plot follows the center line reasonably well. 
+
+Comparing with the residual plot of the untransformed model, our model is better, but still needs some work. 
+
+```{r, eval=TRUE, echo=TRUE, fig.align='center' }
+
+lm.fitOriginal = lm(data = d.worm, GEWICHT ~ MAGENUMF)
+autoplot(lm.fitOriginal)
+
+```
+
+
+## f)
+
+Analysing residual plots plays an important role in validating regression models. Since the statistical tests for significance are also based on assumptions, the conclusions resulting from these significance tests are called into question if the assumptions regarding $\epsilon$ are not satisfied. If the assumptions are not fulfilled, the model could have a limited use area, or be wrong. 
+
+If assumptions are violated, applying nonlinear transformations to some of the variables may help, for example a logarithmic transformation to the dependent or independent variables. 
+
+
+## g)
+
+(i) FALSE
+(ii) FALSE
+(iii) FALSE
+(iv) TRUE
+
+# Problem 3
+
+## a) 
+A linear combination of linear combinations will result in a linear combination.And this is exactly what we are dealing with here. The expression for Pi is a linear combination of the covariates $X_{i, 1}, X_{i, 2}$ etc.
+
+
+```{r, eval=TRUE, echo=TRUE}
+id <- "1GNbIhjdhuwPOBr0Qz82JMkdjUVBuSoZd"
+tennis <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id), 
+                   header = T)
+summary(tennis)
+```
+
+## b) 
+The estimate of the slope is positive, therefore an Ace for player one will increase his or her chance for a win. 
+
+## c) 
+$$ P\hat (Y=1 \vert x) >0.5 $$
+
+$$ P\hat (Y=1 \vert x) = \frac{e^{\beta_0+\beta_1x_{i1}+\beta_{2}x_{i2}}}{1+\beta_0+\beta_1x_{i1}+\beta_2x_{i2}}>0.5 $$
+Solve the equation above with regards to x1 and x2 and insert the values of $\beta_0$ = 0.216, $\beta_1$ = 0.273 and $\beta_2$ = -0.091. And we get $a = 2.9747$ and $b = 0.2354$, in the expression $y=ax+b$. 
+
+```{r, eval=TRUE, echo=TRUE}
+# make variables for difference
+tennis$ACEdiff = tennis$ACE.1 - tennis$ACE.2
+tennis$UFEdiff = tennis$UFE.1 - tennis$UFE.2
+
+# divide into test and train set
+n = dim(tennis)[1]
+n2 = n/2
+set.seed(1234)  # to reproduce the same test and train sets each time you run the code
+train = sample(c(1:n), replace = F)[1:n2]
+tennisTest = tennis[-train, ]
+tennisTrain = tennis[train, ]
+
+logistic <- glm(Result ~ ACEdiff + UFEdiff, data=tennisTrain, family = "binomial")
+
+summary(logistic)
+p <- predict(logistic, type="response")
+round(p)
+
+```
+
+In order to plot the results, I now use ggplot to plot the class boundary line against the set.
+
+```{r, eval=TRUE, echo=TRUE}
+ggplot(tennisTrain, aes(y=UFEdiff, x=ACEdiff, color=Result))+geom_point() + geom_abline(slope=2.9747, intercept=0.2354)
+
+```
+Here one can see the class boundary plottet against the training set.
+
+```{r, eval=TRUE, echo=TRUE}
+p <- predict(logistic, newdata = tennisTest, type="response")
+r <- round(as.numeric(p))
+r
+tennisTest$Result
+table(predict = r, true = tennisTest$Result)
+
+confMat3 = table(tennisTest$Result, p>0.5)
+confMat3
+```
+
+Here the result from the logistic model on the testing data is shown. It is presented in a confusion matrix. 
+
+## d) 
+$$
+\pi_k = Class probabilities \\
+\mu_k = mean \\
+\Sigma = Covariance matrix \\
+f_k(x) = Distribution 
+$$
+
+## e) 
+The class boundary exists where the probability of 1 equals to the probability of 0. As such; 
+$$\delta_0(x)= \delta_1(x)$$
+
+We also know from the lectures that:
+$$ \delta_k(x)= x^T\Sigma^{-1}\mu_k-\frac{1}{2}\mu^T_{k}\Sigma^{-1}\mu_k+log\pi_k $$
+
+Thus we also know that:
+
+$$
+x^T\Sigma^{-1}\mu_0-\frac{1}{2}\mu^T_{0}\Sigma^{-1}\mu_0+log\pi_0 = x^T\Sigma^{-1}\mu_1-\frac{1}{2}\mu^T_{1}\Sigma^{-1}\mu_1+log\pi_1
+$$
+From this we get:
+$$
+x^T\Sigma^{-1}(\mu_1-\mu_0)=log(\frac{\pi_0}{\pi_1})+\frac{1}{2}\Sigma^{-1}(\mu^T_1\mu_1-\mu^T_0\mu_0)
+$$
+
+To find the prior probabilities the confusion matrix is found, and the number of correct guesses is divided by the length of the vector. The average
+
+```{r, eval=TRUE, echo=TRUE}
+
+lda.fit = lda(Result ~ ACEdiff + UFEdiff, data = tennisTrain)
+lda.fit
+lda.fit.p = predict(lda.fit, tennisTest)$class
+confMat = table(lda.fit.p, tennisTest$Result)
+confMat
+```
+
+```{r, eval=TRUE, echo=TRUE}
+ggplot(tennisTrain, aes(y=UFEdiff, x=ACEdiff, color=Result))+geom_point() + geom_abline(slope=1.616, intercept=2.504)
+```
+
+```{r, eval=TRUE, echo=TRUE}
+
+qda.fit = qda(Result ~ ACEdiff + UFEdiff, data = tennisTrain)
+qda.fit
+qda.fit.p = predict(qda.fit, tennisTest)$class
+confMat2 = table(qda.fit.p, tennisTest$Result)
+confMat2
+
+```
+Here i perform a LDA and a QDA on the training set, and then validate with the training set. The results are than printed in two confusion matrices. 
+
+
+```{r, eval=TRUE, echo=TRUE}
+
+```
+
+From the confusion matrices, It seems that LDA is the best method. It has the same specificity, and one better case of sensitvity. The GLM model on the other hand is way off, this may be however user error and not because glm is a bad model for this case.
+
+The best one is LDA. 
+
+
+# Problem 4 - Classification
+
+## a)
+
+Given a set of values for $K$, 10-fold cross validation is performed by first randomly dividing the data into a training set and a testing set, the testing set is not used until the very end. The training dataset is then randomly divided into 10 more or less equal parts, $C_1$, $C_2$, ..., $C_{10}$. $C_k$ denotes the indices of the observations in part $k$. 9 parts are used for training the model and 1 is used for testing the model. This is done 10 times with a new set used as test set each time. The error is then calculated using the loss function in Equation \ref{eq:10foldCV}.
+
+\begin{equation}
+\label{eq:10foldCV}
+\text{CV}_{10} = \sum_{k=1}^{10} \frac{n_k}{10} \text{Err}_k
+\end{equation}
+
+where $n_k$ is the number of observations in part $k$. The error for part $k$ is
+
+\begin{equation}
+\text{Err}_k  = \sum_{i\in C_k} \frac{\text{I}(y_i\neq \hat y_i)}{n_k}
+\end{equation}
+
+where $\text{I}$ is the indicator function defined as 
+
+\begin{equation}
+\text{I}(a\neq\hat{a}) = \begin{cases} 1 \text{ if } a \neq \hat{a} \\ 
+0 \text{ else } \end{cases}
+\end{equation}
+
+This is done for each value of $K$ we want to consider. This will result in a plot of  $\text{CV}_{10}$ against $K$. Based on this plot the best model can be selected. the best model will typically be the one with the lowest $\text{CV}_{10}$. The model is then fit using the whole training dataset, and tested using the test set which has not been used yet. 
+
+
+## b)
+
+(i) True
+(ii) True
+(iii) False
+(iv) False
+
+
+## c)
+
+
+```{r, eval=TRUE, echo=TRUE, fig.align='center' }
+id <- "1I6dk1fA4ujBjZPo3Xj8pIfnzIa94WKcy" # google file ID
+d.chd <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
+#summary(d.chd)
+str(d.chd)
+
+lm.fit = glm(data = d.chd, chd ~ sbp + sex, family = "binomial")
+#summary(lm.fit)
+eta <- summary(lm.fit)$coef[, 1] %*% c(1, 140, 1)
+pchd = exp(eta)/(1 + exp(eta))
+
+```
+
+The probability of a male with $sbp=140$ having coronary heart disease is ```r round(pchd, 3)```.
+
+``` {r ,eval=TRUE, echo=TRUE, fig.align='center' }
+ggplot(d.chd, aes(x = sbp, y = sex, color=as.factor(chd))) + geom_point(size=1) + theme_bw()
+```
+
+## d)
+
+
+```{r 4d, eval=TRUE}
+B = 1000
+n = dim(d.chd)[1]
+estimator = rep(NA, B)
+
+for (b in 1:B) {
+  i = sample(x = c(1:n), size = n, replace = TRUE)
+  newSample = d.chd[i,1:3]
+  fit.4d = glm(chd ~ sbp + sex, data = newSample, family = "binomial")
+  e <- summary(fit.4d)$coef[, 1] %*% c(1, 140, 1)
+  estimator[b] = exp(e)/(1 + exp(e))
+}
+
+meanEstimator = mean(estimator)
+SE = sqrt(1 / (B - 1) * sum((estimator - meanEstimator)^2))
+confinterval = quantile(estimator, probs = c(2.5, 97.5)/100)
+
+```
+
+The standard error is then ```r round(SE, 3)```, and the confidence interval for is [```r round(confinterval, 3)```].
+

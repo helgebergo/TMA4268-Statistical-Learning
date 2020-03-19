@@ -1,0 +1,234 @@
+---
+subtitle: "TMA4268 Statistical Learning V2019"
+title: "Compulsory exercise 1: Group 13"
+author: "Vemund Tjessem, Erik Andre Klepp Vik"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  # html_document
+  pdf_document
+---
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,tidy=TRUE,message=FALSE,warning=FALSE,strip.white=TRUE,prompt=FALSE,
+                      cache=TRUE, size="scriptsize",fig.width=4, fig.height=3)
+```
+
+```{r,eval=TRUE,echo=TRUE}
+# install.packages("knitr") #probably already installed
+# install.packages("rmarkdown") #probably already installed
+# install.packages("ggplot2") #plotting with ggplot
+# install.packages("ggfortify")  
+# install.packages("MASS")  
+# install.packages("dplyr")  
+library(knitr)
+library(rmarkdown)
+library(ggplot2)
+library(ggfortify)
+library(MASS)
+library(dplyr)
+```
+
+
+# Problem 1
+
+For this problem you will need to include some LaTex code. Please install latex on your computer and then consult Compulsor1.Rmd for hints how to write formulas in LaTex. $\Lambda$
+
+\begin{equation}
+  x = p-2
+\end{equation}
+
+## a)
+
+The expected MSE for the function $\hat{f}(x_i)$ is
+
+\begin{equation}
+  MSE_{train} = \frac{1}{n} \sum_{i=1}^{n} (Y_{i}-\hat{f}(x_{i}))^2
+\end{equation}{i}
+
+Further, the expected test mean squared error (MSE) at x$_0$
+
+\begin{equation}
+  E[y_0-\hat{f}(x_i)]^2
+\end{equation}
+
+## b)
+
+This shows that the error term can be decomposed into three terms, that is the irreducible error, the variance of prediction and the squared bias, respectively.
+
+\begin{align}
+    E[y_0-\hat{f}(x_0)]^2 &= E [(y_0 - E(\hat{f}(x_0))- \hat{f}(x_0))^2] \\
+    &= [(y_0 - E(y_0))^2 + 2 ((y_0 - E(y_0))(E(y_0) - \hat{f}(x_0)) (E(y_0)-\hat{f}(x_0))^2] \\
+    &= E[(y_0-E(y_0))^2] + E[(E(y_0) - \hat{f}(x_0))^2] + \epsilon \\
+    &= Var(\epsilon) + Var(\hat{f}(x_0) ) + (f(x_0) - E[\hat{f}(x_0)])^2
+\end{align}
+
+## c)
+
+\begin{itemize}
+  \item Irreducible error: This term cannot be reduced regardless
+  how well our statistical model fits the data.
+  \item Variance of the prediction at $\hat{f}(x_0)$. Relates to the amount
+  by which $\hat{f}(x_0)$ is expected to change for different training
+  data. If the variance is high, there is large uncertainty
+  associated with the prediction. 
+  \item Squared bias. The bias gives an estimate of how much the
+  prediction differs from the true mean. If the bias is low the
+  model gives a prediction which is close to the true value.
+  \end{itemize}
+
+## d)
+
+(i)   TRUE
+(ii)  FALSE
+(iii) TRUE
+(iv)  TRUE
+
+## e)
+
+(i)   TRUE
+(ii)  FALSE
+(iii) FALSE
+(iv)  TRUE
+
+## f)
+
+(iv) 0.17
+
+## g)
+
+Contour plot with $\sigma_x=1$, $\sigma_y=2$ and $\rho=0.1$. This implies best correlation with figure C.
+
+# Problem 2
+
+
+
+```{r, eval=TRUE, echo=TRUE}
+id <- "1nLen1ckdnX4P9n8ShZeU7zbXpLc7qiwt" # google file ID
+d.worm <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
+head(d.worm)
+str(d.worm)
+```
+
+## a)
+The worm dataset has 143 rows and 5 columns. That is, 5 variables are recorded per worm observation. Out of these, Gattung, Fangdatum are qualitative variables, and Nummer, GEWICHT and MAGENUMF are quantitative. That is, we have 2 qualitative and 3 quantitative variables. 
+
+## b) 
+Below you have to complete the code and then replace `eval=FALSE` by `eval=TRUE` in the chunk options:
+
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+sp<-ggplot(d.worm,aes(y=GEWICHT,x=MAGENUMF, colour="red",
+                  fig.width=4, fig.height=3)) + xlim(0,8) + ylim(0,8) +
+  geom_point() + theme_bw()
+sp
+```
+
+
+## c)
+
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+library(ggfortify)
+fit <- lm(GEWICHT~MAGENUMF+Gattung, data = d.worm)
+summary(fit)
+autoplot(fit)
+anova(fit)
+```
+
+intercept -1,97, magenumf = 1.03, GattungN = -0.217, GattungOC = -0.27. 
+
+From this analysis MAGENUMF vs weight has the highest correlation, while as Gattung is not considered a relevant predictor. 
+
+## d)
+
+As seen from the Anova function, MAGENUMF is higly correlated to the response GEWICHT, but in this model it is assumed that the Gattung is non-correlated to MAGENUM. By plotting these against each other, we can check for correlation: 
+
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+fit2 <- lm(MAGENUMF~Gattung, data = d.worm)
+summary(fit2)
+autoplot(fit2)
+anova(fit2)
+```
+intercept = 4.63, gattungN = -0.958, GattungOC = -1.62, 
+It looks like an interaction term could be relevant for the GATTUNG and MAGENUF data set, so we will try that: 
+
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+fit2 <- lm(MAGENUMF~Gattung, data = d.worm)
+summary(fit2)
+autoplot(fit2)
+anova(fit2)
+```
+
+## e)
+
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+
+
+autoplot(sp)
+```
+
+## f)
+
+For this analysis we have used a linear regression model, which was made under 4 assumptions: 
+
+\begin{itemize}
+\item Linearity and additivity of the relationship between dependent and independent variables:
+\item Statistical independence of the errors
+\item Homoscedasticity (constant variance) of the errors
+\item Normality of the error distribution.
+\end{itemize}
+
+The analysis of residuals plays an important role in validating the regression model. Since the statistical tests for significance are also based on assumptions, the conclusions resulting from these significance tests are called into question if the assumptions regarding $\epsilon$ are not satisfied.
+
+The i-th residual is the difference between the observed value of the dependent variable, $y_i$, and the value predicted by the estimated regression equation, $\hat{y}_i$. These residuals, computed from the available data, are treated as estimates of the model error, $\epsilon$. As such, they are used by statisticians to validate the assumptions concerning $\epsilon$. Good judgment and experience play key roles in residual analysis.
+
+How to fix: Consider applying a nonlinear transformation to the dependent and/or independent variables if you can think of a transformation that seems appropriate. For example, if the data are strictly positive, the log transformation is an option. If a log transformation is applied to the dependent variable only, this is equivalent to assuming that it grows (or decays) exponentially as a function of the independent variables.  If a log transformation is applied to both the dependent variable and the independent variables, this is equivalent to assuming that the effects of the independent variables are multiplicative rather than additive in their original units. This means that, on the margin, a small percentage change in one of the independent variables induces a proportional percentage change in the expected value of the dependent variable, other things being equal.  Models of this kind are commonly used in modeling price-demand relationships, as illustrated on the beer sales example on this web site. 
+
+## g)
+
+(i) FALSE
+(ii) FALSE
+(iii) FALSE
+(iv) TRUE
+
+# Problem 3
+
+## a)
+
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+# read file
+id <- "1GNbIhjdhuwPOBr0Qz82JMkdjUVBuSoZd"
+tennis <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download",
+id), header = T)
+
+head(tennis)
+str(tennis)
+```
+
+## b)
+```{r, fig.align='center',out.extra='angle=0', eval=TRUE, echo=TRUE}
+r.tennis = glm(Result ~ ACE.1 + ACE.2 + UFE.1 + UFE.2, data = tennis, family = "binomial")
+summary(r.tennis)
+```
+
+## c)
+
+## d)
+
+## e)
+
+## f)
+
+## g)
+
+## h)
+
+
+# Problem 4
+
+## a)
+
+## b)
+
+## c)
+
+## d)

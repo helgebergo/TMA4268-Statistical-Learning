@@ -1,0 +1,10 @@
+base
+knitr
+rmarkdown
+ggplot2
+ggfortify
+MASS
+dplyr
+boot
+lattice
+caret

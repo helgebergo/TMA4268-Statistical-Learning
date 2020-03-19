@@ -4,8 +4,8 @@ title: "Compulsory Exercise 2: Group 37"
 author: "Anders Bendiksen and Helge Bergo"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
-    pdf_document: default
-    # html_document: default
+    pdf_document
+    # html_document
     #word_document: default
 ---
   
@@ -83,6 +83,11 @@ Using the out-of-state tuition (variable `Outstate`) as response, apply forward 
 Choose a model according to one of the criteria that you know and briefly say why.
 Write down the model and report the MSE on the test set.
 
+```{r}
+library(leaps)
+regfit.fwd = regsubsets(Outstate~.,data=college.train,method="forward")
+summary(regfit.fwd)
+```
  
 
 ## e) (2p)

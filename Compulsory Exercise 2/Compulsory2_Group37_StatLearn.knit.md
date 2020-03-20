@@ -2,7 +2,7 @@
 subtitle: "TMA4268 Statistical Learning V2019"
 title: "Compulsory Exercise 2: Group 37"
 author: "Anders Bendiksen and Helge Bergo"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "20 March, 2020"
 output: 
     pdf_document
     # html_document
@@ -11,27 +11,9 @@ editor_options:
   chunk_output_type: inline
 ---
   
-```{r setup, include=FALSE}
-library(knitr)
-knitr::opts_chunk$set(echo = TRUE,tidy=TRUE,message=FALSE,warning=FALSE,strip.white=TRUE,prompt=FALSE,
-                      cache=TRUE, size="scriptsize",fig.width=4, fig.height=4, fig.align = "center")
 
-```
 
-```{r,eval=TRUE,echo=FALSE}
-# install.packages("knitr") #probably already installed
-# install.packages("rmarkdown") #probably already installed
-# install.packages("ggplot2") #plotting with ggplot
-# install.packages("ggfortify")  
-# install.packages("MASS")  
-# install.packages("dplyr")  
-library(knitr)
-library(rmarkdown)
-library(ggplot2)
-library(ggfortify)
-library(MASS)
-library(dplyr)
-```
+
 
 
 # Problem 1 (10p)
@@ -56,7 +38,8 @@ Find the expected value and the variance-covariance matrix of $\hat\beta_{Ridge}
 
 ## d) Forward Selection
 
-```{r}
+
+```r
 library(ISLR)
 set.seed(1)
 train.ind = sample(1:nrow(College), 0.5*nrow(College))
@@ -64,24 +47,21 @@ college.train = College[train.ind,]
 college.test = College[-train.ind,]
 ```
 
-```{r,echo=F,eval=F}
-str(College)
-#Using the out-of-state tuition (variable `Outstate`) as response, apply forward selection in order to identify a satisfactory model that uses only a subset of all the variables in the dataset in order to predict the response.
-#Choose a model according to one of the criteria that you know and briefly say why.
-```
+
 
 After dividing the data into a training and test set, the `regsubsets` function was used to create a forward selection model on the data, from the `leaps`-library.
 
-```{r p2d2, eval=TRUE, echo=TRUE}
+
+```r
 library(leaps)
 regfit.fwd = regsubsets(Outstate~.,data=college.train,method="forward", nvmax = 18)
 reg.summary = summary(regfit.fwd)
-
 ```
 
 To decide on which model is best, the number of variables used in the selection was plotted against `RSS`, `Cp`, `BIC` and `adjusted R$^2$`. 
 
-```{r p2d3, eval=TRUE, echo=TRUE, fig.width=5, fig.height=5}
+
+```r
 par(mfrow=c(2,2))
 plot(reg.summary$rss,xlab="Number of variables",ylab="RSS",type="b")
 
@@ -98,22 +78,32 @@ min.bic = which.min(reg.summary$bic)
 points(min.bic,reg.summary$bic[min.bic], col="black",cex=2,pch=20)
 ```
 
-The maximum `adjusted` $R^2$ is the one with `r max.adjr2` variables, with a value of `r reg.summary$adjr2[max.adjr2]`, shown as a filled dot in the upper right plot. This is also the same number of variables as for the lowest Cp. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. The model is then:
 
-```{r}
+
+\begin{center}\includegraphics{Compulsory2_Group37_StatLearn_files/figure-latex/p2d3-1} \end{center}
+
+The maximum `adjusted` $R^2$ is the one with 14 variables, with a value of 0.7706887, shown as a filled dot in the upper right plot. This is also the same number of variables as for the lowest Cp. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of 0.7516133, without the increased complexity of adding 7 more variables. The model is then:
+
+
+```r
 coef(regfit.fwd,6)
 ```
 
- 
-```{r, eval=F, echo=F}
-coef.for = coef(regfit.fwd,max_point)
-coef.for
 ```
+##   (Intercept)    PrivateYes    Room.Board      Terminal   perc.alumni 
+## -4726.8810613  2717.7019276     1.1032433    36.9990286    59.0863753 
+##        Expend     Grad.Rate 
+##     0.1930814    33.8303314
+```
+
+ 
+
 
 For the MSE, the following code calculates the MSE for all the variables. 
 
 
-```{r, eval=TRUE, echo=TRUE }
+
+```r
 val.errors = rep(NA,17)
 x.test = model.matrix(Outstate~.,data=college.test) # notice the -index!
 for (i in 1:17) {
@@ -128,21 +118,24 @@ for (i in 1:17) {
 ```
 
 The MSE of the model with 6 variables is then: 
-```{r}
+
+```r
 val.errors[6]
+```
+
+```
+## [1] 3844857
 ```
 
 
 ## e) (2p)
 
-```{r eval=F, echo=F}
-# Now do model selection using the same dataset as in (d) using the Lasso method. How did you select the tuning parameter $\lambda$?
-# Report the set of variables that was selected and the MSE on the test set.
-```
+
 
 Using the Lasso method from the `glmnet`-library, a new model was selected. 
 
-```{r}
+
+```r
 library(glmnet)
 x.train = model.matrix(Outstate~.,data=college.train)[,-1]
 y.train = college.train$Outstate
@@ -153,29 +146,61 @@ lasso.model = glmnet(x.train,y.train,alpha = 1)
 plot(lasso.model)
 ```
 
+
+
+\begin{center}\includegraphics{Compulsory2_Group37_StatLearn_files/figure-latex/unnamed-chunk-9-1} \end{center}
+
 To select the tuning parameter $\lambda$, cross-validation was performed, and the $\lambda$ giving the lowest MSE was selected.
 
-```{r, fig.width=4, fig.height=4}
+
+```r
 cv.out = cv.glmnet(x.train,y.train, alpha = 1)
 plot(cv.out)
+```
+
+
+
+\begin{center}\includegraphics{Compulsory2_Group37_StatLearn_files/figure-latex/unnamed-chunk-10-1} \end{center}
+
+```r
 best.lambda = cv.out$lambda.min
 best.lambda
 ```
 
+```
+## [1] 10.7207
+```
+
 This was used on the test set, to get the MSE for the 
 
-```{r}
+
+```r
 lasso.pred = predict(lasso.model,s=best.lambda ,newx=x.test)
 MSE = mean((lasso.pred-y.test)^2)
 MSE
 ```
 
+```
+## [1] 3688061
+```
+
 Finally, the coefficients of the model are shown here: 
 
-```{r}
+
+```r
 lasso.coef = predict(cv.out,type="coefficients",s=best.lambda)[1:18,]
 lasso.coef
+```
 
+```
+##   (Intercept)    PrivateYes          Apps        Accept        Enroll 
+## -1.172140e+03  2.230467e+03 -2.825215e-01  6.615811e-01 -3.778631e-01 
+##     Top10perc     Top25perc   F.Undergrad   P.Undergrad    Room.Board 
+##  4.589180e+01 -1.485674e+01 -5.800132e-02 -5.713770e-02  1.088115e+00 
+##         Books      Personal           PhD      Terminal     S.F.Ratio 
+## -9.185125e-01 -3.005419e-01  4.013410e+00  2.996744e+01 -6.936391e+01 
+##   perc.alumni        Expend     Grad.Rate 
+##  4.686967e+01  1.480013e-01  2.431539e+01
 ```
  
 
@@ -204,23 +229,20 @@ Write down the basis functions for a cubic spline with knots at the quartiles $q
 
 ## c) (2p)
 
-```{r, echo=F}
-library(leaps)
-for.reg = regsubsets(Outstate~., data = college.train, method = "forward")
-coef.for = coef(for.reg, id = 6)
-co.names =  names(coef.for)[-1]
-co.names[1] = "Private" 
-```
+
 
 We continue with using the `College` dataset that we used in problem 1. Investigate the relationships between `Outstate` and the following 6 predictors (using the training dataset `college.train`): 
 
-```{r, echo=F,eval=T}
-co.names
+
+```
+## [1] "Private"     "Room.Board"  "Terminal"    "perc.alumni" "Expend"     
+## [6] "Grad.Rate"
 ```
 
 Create some informative plots and say which of the variables seem to have a linear relationship and which not and might thus benefit from a non-linear transformation (like e.g. a spline).
 
-```{r 2c3, fig.width=6, fig.height=4}
+
+```r
 par(mfrow=c(2,3))
 plot(College$Private,College$Outstate)
 plot(College$Room.Board,College$Outstate)
@@ -228,25 +250,43 @@ plot(College$Terminal,College$Outstate)
 plot(College$perc.alumni,College$Outstate)
 plot(College$Expend,College$Outstate)
 plot(College$Grad.Rate,College$Outstate)
-
 ```
+
+
+
+\begin{center}\includegraphics{Compulsory2_Group37_StatLearn_files/figure-latex/2c3-1} \end{center}
 From these plots, it seems like `Room.board`, `perc.alumni` and `Grad.Rate` all have quite linear relationshps with `Outstate`, while both `Terminal` and `Expend` seem to follow a non-linear relationship. 
 
 ## d) (3P)
 
 (i) Fit polynomial regression models for `Outstate` with `Terminal` as the only covariate for a range of polynomial degrees ($d = 1,\ldots,10$) and plot the results. Use the training data (`college.train`) for this task.
 
-```{r}
 
+```r
 for (i in 1:10) {
   poly.fit = lm(Outstate ~ poly(Terminal,i), data=college.train)
   # plot(poly.fit)  
 }
 coef(summary(poly.fit))
- 
 ```
 
-```{r}
+```
+##                       Estimate Std. Error    t value      Pr(>|t|)
+## (Intercept)         10484.0000   191.4776 54.7531395 1.592465e-181
+## poly(Terminal, i)1  33775.7920  3771.6714  8.9551258  1.576072e-17
+## poly(Terminal, i)2  16996.9239  3771.6714  4.5064700  8.807400e-06
+## poly(Terminal, i)3   5610.8187  3771.6714  1.4876213  1.376867e-01
+## poly(Terminal, i)4    906.6817  3771.6714  0.2403925  8.101566e-01
+## poly(Terminal, i)5  -2479.4660  3771.6714 -0.6573918  5.113301e-01
+## poly(Terminal, i)6    651.1277  3771.6714  0.1726364  8.630299e-01
+## poly(Terminal, i)7  -5472.4748  3771.6714 -1.4509416  1.476277e-01
+## poly(Terminal, i)8  -4631.9185  3771.6714 -1.2280811  2.201827e-01
+## poly(Terminal, i)9  -9973.8438  3771.6714 -2.6444095  8.525278e-03
+## poly(Terminal, i)10 -2737.9707  3771.6714 -0.7259303  4.683319e-01
+```
+
+
+```r
 library(ISLR)
 # extract only the two variables from Auto
 ds = Auto[c("horsepower", "mpg")]
@@ -279,6 +319,10 @@ MSE = sapply(deg, function(d) {
 # add legend to see which color corresponds to which line
 legend("topright", legend = paste("d =", deg), lty = 1, col = colors)
 ```
+
+
+
+\begin{center}\includegraphics{Compulsory2_Group37_StatLearn_files/figure-latex/unnamed-chunk-16-1} \end{center}
 
 
 (ii) Still for the training data, choose a suitable smoothing spline model to predict `Outstate` as a function of `Expend` (again as the only covariate) and plot the fitted function into the scatterplot of `Outstate` against `Expend`. How did you choose the degrees of freedom?
@@ -334,7 +378,8 @@ We will use the classical data set of _diabetes_ from a population of women of P
 We will use a training set (called `d.train`) with 300 observations (200 non-diabetes and 100 diabetes cases) and a test set (called `d.test`) with 232 observations (155 non-diabetes and 77 diabetes cases). Our aim is to make a classification rule for the presence of diabetes (yes/no) based on the available data. You can load the data as follows:
 
 
-```{r}
+
+```r
 id <- "1Fv6xwKLSZHldRAC1MrcK2mzdOYnbgv0E" # google file ID
 d.diabetes <- dget(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
 d.train=d.diabetes$ctrain
@@ -357,13 +402,15 @@ Fit a support vector classifier (linear boundary) and a support vector machine (
 (Do not use any variable transformations or standardizations to facilitate correction).
 
 **R-hints:** The response variable must be converted into a factor variable before you continue.
-```{r,eval=F,echo=T}
+
+```r
 d.train$diabetes <- as.factor(d.train$diabetes)
 d.test$diabetes <- as.factor(d.test$diabetes)
 ```
 
 To run cross-validation over a grid of two tuning parameters, you can use the `tune()` function where `ranges` defines the grid points as follows: 
-```{r,eval=F,echo=T}
+
+```r
 tune(..., formula, kernel=...,ranges=list(cost=c(...), gamma=c(...)))
 ```
 
@@ -399,7 +446,8 @@ is the deviance for the $y=-1,1$ encoding in a logistic regression model.
 
 The following dataset consists of 40 tissue samples with measurements of 1,000 genes. The first 20 tissues come from healthy patients and the remaining 20 come from a diseased patient group. The following code loads the dataset into your session with row names decribing if the tissue comes from a diseased or healthy person.
 
-```{r, eval = T}
+
+```r
 # id <- "1VfVCQvWt121UN39NXZ4aR9Dmsbj-p9OU" # google file ID
 # GeneData <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id),header=F)
 # colnames(GeneData)[1:20] = paste(rep("H", 20), c(1:20), sep = "")

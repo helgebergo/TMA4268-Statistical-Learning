@@ -32,20 +32,16 @@ library(dplyr)
 ```
 
 
-
 # Problem 1 (10p)
 
 ## a) Ridge Regression (2p)
 
 Show that the ridge regression estimator is $\hat\beta_{Ridge} = (X^T X + \lambda I)^{-1} X^T y$.
 
- 
 
 ## b) (2p)
 
 Find the expected value and the variance-covariance matrix of $\hat\beta_{Ridge}$ (1P each).
-
- 
 
 
 ## c) (2P) - Multiple choice
@@ -55,7 +51,6 @@ Find the expected value and the variance-covariance matrix of $\hat\beta_{Ridge}
 (iii) FALSE
 (iv)  TRUE
 
- 
 
 ## d) Forward Selection
 
@@ -87,15 +82,21 @@ To decide on which model is best, the number of variables used in the selection 
 ```{r p2d3, eval=TRUE, echo=TRUE, fig.width=5, fig.height=5}
 par(mfrow=c(2,2))
 plot(reg.summary$rss,xlab="Number of variables",ylab="RSS",type="b")
-plot(reg.summary$cp,xlab="Number of variables",ylab="Cp",type="b")
-plot(reg.summary$bic,xlab="Number of variables",ylab="BIC",type="b")
+
 plot(reg.summary$adjr2,xlab="Number of variables",ylab="Adjusted Rsq",type="b")
-max_point = which.max(reg.summary$adjr2)
-points(max_point,reg.summary$adjr2[max_point], col="black",cex=2,pch=20)
+max.adjr2 = which.max(reg.summary$adjr2)
+points(max.adjr2,reg.summary$adjr2[max.adjr2], col="black",cex=2,pch=20)
+
+plot(reg.summary$cp,xlab="Number of variables",ylab="Cp",type="b")
+min.cp = which.min(reg.summary$cp)
+points(min.cp,reg.summary$cp[min.cp], col="black",cex=2,pch=20)
+
+plot(reg.summary$bic,xlab="Number of variables",ylab="BIC",type="b")
+min.bic = which.min(reg.summary$bic)
+points(min.bic,reg.summary$bic[min.bic], col="black",cex=2,pch=20)
 ```
 
-
-The maximum `adjusted` $R^2$ is the one with `r max_point` variables, with a value of `r reg.summary$adjr2[max_point]`, shown as a filled dot in the lower right plot. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. The model is then:
+The maximum `adjusted` $R^2$ is the one with `r max.adjr2` variables, with a value of `r reg.summary$adjr2[max.adjr2]`, shown as a filled dot in the upper right plot. This is also the same number of variables as for the lowest Cp. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. The model is then:
 
 ```{r}
 coef(regfit.fwd,6)
@@ -124,31 +125,54 @@ for (i in 1:17) {
 # legend("topright",legend=c("Training","Validation"),col=c("black","blue"),pch=19)
 ```
 
-The MSE of the model with 6 variables is `r val.errors[6]`, when using the model on the test set.  
+The MSE of the model with 6 variables is then: 
+```{r}
+val.errors[6]
+```
+
 
 ## e) (2p)
 
-Now do model selection using the same dataset as in (d) using the Lasso method. How did you select the tuning parameter $\lambda$?
-Report the set of variables that was selected and the MSE on the test set.
+```{r eval=F, echo=F}
+# Now do model selection using the same dataset as in (d) using the Lasso method. How did you select the tuning parameter $\lambda$?
+# Report the set of variables that was selected and the MSE on the test set.
+```
+
+Using the Lasso method from the `glmnet`-library, a new model was selected. 
 
 ```{r}
 library(glmnet)
-x.train = model.matrix(Outstate~.,data=college.train)
+x.train = model.matrix(Outstate~.,data=college.train)[,-1]
 y.train = college.train$Outstate
+x.test = model.matrix(Outstate~.,data=college.test)[,-1]
 y.test = college.test$Outstate
 
-grid = 10^seq(10,-2,length=100)
-lasso.model = glmnet(x.train,y.train,alpha=1,lambda=grid)
+lasso.model = glmnet(x.train,y.train,alpha = 1)
 plot(lasso.model)
-
 ```
 
-```{r}
-cv.out = cv.glmnet(x.train,y.train,alpha=1)
+To select the tuning parameter $\lambda$, cross-validation was performed, and the $\lambda$ giving the lowest MSE was selected.
+
+```{r, fig.width=4, fig.height=4}
+cv.out = cv.glmnet(x.train,y.train, alpha = 1)
 plot(cv.out)
-bestlam = cv.out$lambda.min
-lasso.pred = predict(lasso.model,s=bestlam ,newx=x.test)
-mean((lasso.pred-y.test)^2)
+best.lambda = cv.out$lambda.min
+best.lambda
+```
+
+This was used on the test set, to get the MSE for the 
+
+```{r}
+lasso.pred = predict(lasso.model,s=best.lambda ,newx=x.test)
+MSE = mean((lasso.pred-y.test)^2)
+MSE
+```
+
+Finally, the coefficients of the model are shown here: 
+
+```{r}
+lasso.coef = predict(cv.out,type="coefficients",s=best.lambda)[1:18,]
+lasso.coef
 
 ```
  
@@ -164,6 +188,10 @@ Which of the following statements are true, which false?
 (iii) A natural cubic spline is linear beyond the boundary knots.
 (iv) A smoothing spline is (a shrunken version of) a natural cubic spline with knots at the values of all data points $x_i$ for $i=1,\ldots ,n$.
 
+(i)   
+(ii)  
+(iii) 
+(iv)  
  
 
 ## b) (2p)

@@ -12,7 +12,7 @@ output:
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = TRUE,tidy=TRUE,message=FALSE,warning=FALSE,strip.white=TRUE,prompt=FALSE,
-                      cache=TRUE, size="scriptsize",fig.width=4, fig.height=3, fig.align = "center")
+                      cache=TRUE, size="scriptsize",fig.width=4, fig.height=4, fig.align = "center")
 
 ```
 
@@ -50,16 +50,10 @@ Find the expected value and the variance-covariance matrix of $\hat\beta_{Ridge}
 
 ## c) (2P) - Multiple choice
 
-Which of the following statements are true, which false? 
-
-(i) For a problem that $p>n$ we can use forward selection but not backward.
-
-(ii) Ridge Regression exploits the trade-off between variance and bias in the MSE, but Lasso doesn't.
-
-(iii) Ridge and Lasso perform variable selection.
-
-(iv) As the tuning parameter $\lambda$ in ridge regression increases, the variance decreases and the bias increases.
-
+(i)   TRUE
+(ii)  FALSE
+(iii) FALSE
+(iv)  TRUE
 
  
 
@@ -71,15 +65,11 @@ For the following regression tasks in problems 1--3 we will use the `College` da
 library(ISLR)
 set.seed(1)
 train.ind = sample(1:nrow(College), 0.5*nrow(College))
-College$Private = as.factor(College$Private)
 college.train = College[train.ind,]
 college.test = College[-train.ind,]
-
 ```
 
-```{r,echo=T,eval=F}
-str(College)
-College$Private = as.factor(College$Private)
+```{r,echo=F,eval=F}
 str(College)
 ```
 
@@ -87,13 +77,16 @@ Using the out-of-state tuition (variable `Outstate`) as response, apply forward 
 Choose a model according to one of the criteria that you know and briefly say why.
 Write down the model and report the MSE on the test set.
 
-```{r, eval=TRUE, echo=TRUE, fig.align='center' }
+```{r, eval=TRUE, echo=TRUE}
 library(leaps)
 regfit.fwd = regsubsets(Outstate~.,data=college.train,method="forward", nvmax = 18)
 reg.summary = summary(regfit.fwd)
 
 plot(regfit.fwd,scale="Cp")
+
 plot(reg.summary$cp,xlab="Number of variables",ylab="Cp")
+plot(reg.summary$bic,xlab="Number of variables",ylab="BIC")
+plot(reg.summary$adjr2,xlab="Number of variables",ylab="Adjusted R^2")
 min_cp = which.min(reg.summary$cp)
 points(min_cp,reg.summary$cp[min_cp],pch=20,col="red")
 coef(regfit.fwd,min_cp)

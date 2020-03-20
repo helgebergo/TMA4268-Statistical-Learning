@@ -84,7 +84,7 @@ reg.summary = summary(regfit.fwd)
 
 To decide on which model is best, the number of variables used in the selection was plotted against `RSS`, `Cp`, `BIC` and `adjusted R$^2$`. 
 
-```{r p2d3, eval=TRUE, echo=TRUE, fig.width=6, fig.height=6}
+```{r p2d3, eval=TRUE, echo=TRUE, fig.width=5, fig.height=5}
 par(mfrow=c(2,2))
 plot(reg.summary$rss,xlab="Number of variables",ylab="RSS",type="b")
 plot(reg.summary$cp,xlab="Number of variables",ylab="Cp",type="b")
@@ -95,17 +95,22 @@ points(max_point,reg.summary$adjr2[max_point], col="black",cex=2,pch=20)
 ```
 
 
-The maximum `adjusted` $R^2$ is the one with `r max_point` variables, with a value of `r reg.summary$adjr2[max_point]`, shown as a filled dot in the lower right plot. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. 
+The maximum `adjusted` $R^2$ is the one with `r max_point` variables, with a value of `r reg.summary$adjr2[max_point]`, shown as a filled dot in the lower right plot. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. The model is then:
+
+```{r}
+coef(regfit.fwd,6)
+```
 
  
-```{r}
+```{r, eval=F, echo=F}
 coef.for = coef(regfit.fwd,max_point)
 coef.for
 ```
 
-For the MSE, 
+For the MSE, the following code calculates the MSE for all the variables. 
 
-```{r, eval=TRUE, echo=TRUE, fig.align='center' }
+
+```{r, eval=TRUE, echo=TRUE }
 val.errors = rep(NA,17)
 x.test = model.matrix(Outstate~.,data=college.test) # notice the -index!
 for (i in 1:17) {
@@ -114,18 +119,38 @@ for (i in 1:17) {
     val.errors[i] = mean((college.test$Outstate-pred)^2)
 }
 
-plot(sqrt(val.errors),ylab="Root MSE",ylim=c(1500,5000) ,pch=19,type="b")
-points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
-legend("topright",legend=c("Training","Validation"),col=c("blue","black"),pch=19)
+# plot(sqrt(val.errors),xlab="Number of variables", ylab="Root MSE",ylim=c(1500,5000) ,pch=19,type="b")
+# points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
+# legend("topright",legend=c("Training","Validation"),col=c("black","blue"),pch=19)
 ```
 
-
+The MSE of the model with 6 variables is `r val.errors[6]`, when using the model on the test set.  
 
 ## e) (2p)
 
 Now do model selection using the same dataset as in (d) using the Lasso method. How did you select the tuning parameter $\lambda$?
 Report the set of variables that was selected and the MSE on the test set.
 
+```{r}
+library(glmnet)
+x.train = model.matrix(Outstate~.,data=college.train)
+y.train = college.train$Outstate
+y.test = college.test$Outstate
+
+grid = 10^seq(10,-2,length=100)
+lasso.model = glmnet(x.train,y.train,alpha=1,lambda=grid)
+plot(lasso.model)
+
+```
+
+```{r}
+cv.out = cv.glmnet(x.train,y.train,alpha=1)
+plot(cv.out)
+bestlam = cv.out$lambda.min
+lasso.pred = predict(lasso.model,s=bestlam ,newx=x.test)
+mean((lasso.pred-y.test)^2)
+
+```
  
 
 # Problem 2 (9p)

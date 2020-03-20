@@ -260,7 +260,7 @@ deg = 1:10
 tr = sample.int(n, n/2)
 # plot of training data
 # plot(ds[tr, ], col = "darkgrey", main = "Polynomial regression")
-plot(college.train$Outstate,col = "darkgrey", main = "Polynomial regression")
+plot(college.train$Outstate,col = "darkgrey", main = "Polynomial regression",xlab = "Terminal",ylab = "Outstate")
 
 # which colors we will plot the lines with
 colors = rainbow(length(deg))

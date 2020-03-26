@@ -218,7 +218,8 @@ We continue with using the `College` dataset that we used in problem 1. Investig
 co.names
 ```
 
-Create some informative plots and say which of the variables seem to have a linear relationship and which not and might thus benefit from a non-linear transformation (like e.g. a spline).
+Create some informative plots and say which of the variables seem to have a linear relationship with the response, and which might benefit from a non-linear transformation (like e.g. a spline).
+
 
 ```{r 2c3, fig.width=6, fig.height=4}
 par(mfrow=c(2,3))
@@ -278,6 +279,25 @@ MSE = sapply(deg, function(d) {
 })
 # add legend to see which color corresponds to which line
 legend("topright", legend = paste("d =", deg), lty = 1, col = colors)
+```
+
+
+```{r, fig.width=8, fig.height=8}
+attach(college.train)
+
+func = function(d) {
+  mod = lm(Outstate ~ poly(Terminal,d), data=college.train)
+  lines(cbind(college.train$Terminal,mod$fit)[order(college.train$Terminal),], col=cols[d])
+  pred = predict(mod, college.train)
+  mean((pred - college.train$Outstate)^2)
+}
+cols = rainbow(10)
+deg = 1:10
+
+plot(Terminal, Outstate, col = "gray", pch=19)
+MSE = sapply(deg, func)
+legend("topleft",legend = paste("degree = ",deg), lty = 1, col = cols)
+
 ```
 
 

@@ -13,8 +13,8 @@ editor_options:
   
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = TRUE,tidy=TRUE,message=FALSE,warning=FALSE,strip.white=TRUE,prompt=FALSE,
-                      cache=TRUE, size="scriptsize",fig.width=4, fig.height=4, fig.align = "center")
+knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, message=FALSE, warning=FALSE, strip.white=TRUE, prompt=FALSE,
+                      cache = TRUE, size="scriptsize", fig.width=4, fig.height=4, fig.align = "center")
 
 ```
 
@@ -142,7 +142,7 @@ val.errors[6]
 
 Using the Lasso method from the `glmnet`-library, a new model was selected. 
 
-```{r}
+```{r eval=T, echo=F}
 library(glmnet)
 x.train = model.matrix(Outstate~.,data=college.train)[,-1]
 y.train = college.train$Outstate
@@ -204,31 +204,31 @@ Write down the basis functions for a cubic spline with knots at the quartiles $q
 
 ## c) (2p)
 
-```{r, echo=F}
+```{r 2c1, echo=FALSE}
 library(leaps)
 for.reg = regsubsets(Outstate~., data = college.train, method = "forward")
 coef.for = coef(for.reg, id = 6)
 co.names =  names(coef.for)[-1]
 co.names[1] = "Private" 
+#We continue with using the `College` dataset that we used in problem 1. Investigate the relationships between `Outstate` and the following 6 predictors (using the training dataset `college.train`): 
 ```
 
-We continue with using the `College` dataset that we used in problem 1. Investigate the relationships between `Outstate` and the following 6 predictors (using the training dataset `college.train`): 
 
-```{r, echo=F,eval=T}
+```{r, echo=F,eval=F}
 co.names
+#Create some informative plots and say which of the variables seem to have a linear relationship with the response, and which might benefit from a non-linear transformation (like e.g. a spline).
 ```
 
-Create some informative plots and say which of the variables seem to have a linear relationship with the response, and which might benefit from a non-linear transformation (like e.g. a spline).
 
 
-```{r 2c3, fig.width=6, fig.height=4}
+```{r 2c3, fig.width=6, fig.height=4, echo=FALSE}
 par(mfrow=c(2,3))
-plot(College$Private,College$Outstate)
-plot(College$Room.Board,College$Outstate)
-plot(College$Terminal,College$Outstate)
-plot(College$perc.alumni,College$Outstate)
-plot(College$Expend,College$Outstate)
-plot(College$Grad.Rate,College$Outstate)
+plot(College$Private,College$Outstate, xlab="Private", ylab="Outstate")
+plot(College$Room.Board,College$Outstate, xlab="Room.Board", ylab="Outstate")
+plot(College$Terminal,College$Outstate, xlab="Terminal", ylab="Outstate")
+plot(College$perc.alumni,College$Outstate, xlab="perc.alumni", ylab="Outstate")
+plot(College$Expend,College$Outstate, xlab="Expend", ylab="Outstate")
+plot(College$Grad.Rate,College$Outstate, xlab="Grad.Rate", ylab="Outstate")
 
 ```
 From these plots, it seems like `Room.board`, `perc.alumni` and `Grad.Rate` all have quite linear relationshps with `Outstate`, while both `Terminal` and `Expend` seem to follow a non-linear relationship. 
@@ -237,76 +237,58 @@ From these plots, it seems like `Room.board`, `perc.alumni` and `Grad.Rate` all 
 
 (i) Fit polynomial regression models for `Outstate` with `Terminal` as the only covariate for a range of polynomial degrees ($d = 1,\ldots,10$) and plot the results. Use the training data (`college.train`) for this task.
 
-```{r}
 
-for (i in 1:10) {
-  poly.fit = lm(Outstate ~ poly(Terminal,i), data=college.train)
-  # plot(poly.fit)  
-}
-coef(summary(poly.fit))
- 
-```
-
-```{r}
-library(ISLR)
-# extract only the two variables from Auto
-ds = Auto[c("horsepower", "mpg")]
-ds = college.train[c("Terminal","Outstate")]
-n = nrow(ds)
-
-# which degrees we will look at
-deg = 1:10
-
-# training ids for training set
-tr = sample.int(n, n/2)
-# plot of training data
-# plot(ds[tr, ], col = "darkgrey", main = "Polynomial regression")
-plot(college.train$Outstate,col = "darkgrey", main = "Polynomial regression",xlab = "Terminal",ylab = "Outstate")
-
-# which colors we will plot the lines with
-colors = rainbow(length(deg))
-# iterate over all degrees (1:4) - could also use a for-loop here 
-MSE = sapply(deg, function(d) {
-  # fit model with this degree
-  model = lm(Outstate ~ poly(Terminal, d), data=college.train)
-  
-  lines(cbind(college.train$Terminal, model$fit)[order(college.train$Terminal) ,], col = colors[d])
-  # add lines to the plot - use fitted values (for mpg) and horsepower from # training set
-  # lines(cbind(ds[tr, 1], model$fit)[order(ds[tr, 1]), ], col = colors[d])
-  
-  # calculate mean MSE - this is returned in the MSE variable 
-  # mean((predict(mod, ds[-tr, ]) - ds[-tr, 2])^2)
-})
-# add legend to see which color corresponds to which line
-legend("topright", legend = paste("d =", deg), lty = 1, col = colors)
-```
-
-
-```{r, fig.width=8, fig.height=8}
-attach(college.train)
-
-func = function(d) {
-  mod = lm(Outstate ~ poly(Terminal,d), data=college.train)
-  lines(cbind(college.train$Terminal,mod$fit)[order(college.train$Terminal),], col=cols[d])
-  pred = predict(mod, college.train)
+```{r 2di}
+polyfunc = function(d) {
+  model = lm(Outstate ~ poly(Terminal,d), data=college.train)
+  lines(cbind(college.train$Terminal, model$fit)[order(college.train$Terminal),],col=cols[d])
+  pred = predict(model, college.train)
   mean((pred - college.train$Outstate)^2)
 }
 cols = rainbow(10)
 deg = 1:10
 
-plot(Terminal, Outstate, col = "gray", pch=19)
-MSE = sapply(deg, func)
-legend("topleft",legend = paste("degree = ",deg), lty = 1, col = cols)
+plot(college.train$Terminal, college.train$Outstate, col = "gray", pch=19, 
+     cex = 0.5, xlab = "Terminal", ylab = "Outstate")
+MSE = sapply(deg, polyfunc)
+legend("topleft",legend = paste("degree = ",deg), col = cols, cex = 0.4)
 
 ```
 
 
 (ii) Still for the training data, choose a suitable smoothing spline model to predict `Outstate` as a function of `Expend` (again as the only covariate) and plot the fitted function into the scatterplot of `Outstate` against `Expend`. How did you choose the degrees of freedom?
+
+
+```{r 2dii, eval=TRUE, echo=TRUE}
+library(splines)
+attach(college.train)
+expend.range = range(Expend)
+expend.grid = seq(from=expend.range[1],to=expend.range[2])
+
+plot(Expend, Outstate, col = "darkgrey", pch=19, cex = 0.5)
+fit.smoothspline = smooth.spline(Expend,Outstate,cv=TRUE)
+lines(fit.smoothspline)
+legend("bottomright",legend=paste("DF =",round(fit.smoothspline$df,2)),cex=.8)
+
+```
+
+The degrees of freedom was chosen using cross-validation, and the result was `r fit.smoothspline$df`. 
+
 (iii) Report the corresponding training MSE for (i) and (ii). Did you expect that?
 
+```{r, eval=TRUE, echo=TRUE, tidy=T}
+MSE.smoothspline.train = mean((predict(fit.smoothspline, college.train$Expend)$y - 
+                                 college.train$Outstate)^2)
+MSE.smoothspline.test = mean((predict(fit.smoothspline, college.test$Expend)$y - 
+                                college.test$Outstate)^2)
+MSE.smoothspline.train
+MSE.smoothspline.test
+MSE[which.min(MSE)]
+```
 
- 
+The MSE for the polynomial 
 
+MSE is `r sprintf("%.0f",MSE.smoothspline.train )` for the train set, and `r sprintf("%.0f",MSE.smoothspline.test)` for the
 
 # Problem 3 (9p)
 

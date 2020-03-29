@@ -8,7 +8,7 @@ output:
     # html_document
     #word_document: default
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
   
 ```{r setup, include=FALSE}
@@ -150,7 +150,7 @@ x.test = model.matrix(Outstate~.,data=college.test)[,-1]
 y.test = college.test$Outstate
 
 lasso.model = glmnet(x.train,y.train,alpha = 1)
-plot(lasso.model)
+# plot(lasso.model)
 ```
 
 To select the tuning parameter $\lambda$, cross-validation was performed, and the $\lambda$ giving the lowest MSE was selected.
@@ -239,20 +239,18 @@ From these plots, it seems like `Room.board`, `perc.alumni` and `Grad.Rate` all 
 
 
 ```{r 2di}
+cols = rainbow(10)
+deg = 1:10
 polyfunc = function(d) {
   model = lm(Outstate ~ poly(Terminal,d), data=college.train)
   lines(cbind(college.train$Terminal, model$fit)[order(college.train$Terminal),],col=cols[d])
   pred = predict(model, college.train)
   mean((pred - college.train$Outstate)^2)
 }
-cols = rainbow(10)
-deg = 1:10
-
 plot(college.train$Terminal, college.train$Outstate, col = "gray", pch=19, 
      cex = 0.5, xlab = "Terminal", ylab = "Outstate")
 MSE = sapply(deg, polyfunc)
 legend("topleft",legend = paste("degree = ",deg), col = cols, cex = 0.4)
-
 ```
 
 
@@ -268,27 +266,26 @@ expend.grid = seq(from=expend.range[1],to=expend.range[2])
 plot(Expend, Outstate, col = "darkgrey", pch=19, cex = 0.5)
 fit.smoothspline = smooth.spline(Expend,Outstate,cv=TRUE)
 lines(fit.smoothspline)
-legend("bottomright",legend=paste("DF =",round(fit.smoothspline$df,2)),cex=.8)
+# legend("bottomright",legend=paste("DF =",round(fit.smoothspline$df,2)),cex=.8)
 
 ```
 
-The degrees of freedom was chosen using cross-validation, and the result was `r fit.smoothspline$df`. 
+The degrees of freedom was chosen using cross-validation, and the result was `r round(fit.smoothspline$df,3)`. 
 
 (iii) Report the corresponding training MSE for (i) and (ii). Did you expect that?
 
 ```{r, eval=TRUE, echo=TRUE, tidy=T}
 MSE.smoothspline.train = mean((predict(fit.smoothspline, college.train$Expend)$y - 
                                  college.train$Outstate)^2)
-MSE.smoothspline.test = mean((predict(fit.smoothspline, college.test$Expend)$y - 
-                                college.test$Outstate)^2)
 MSE.smoothspline.train
-MSE.smoothspline.test
-MSE[which.min(MSE)]
+# MSE.smoothspline.test = mean((predict(fit.smoothspline, college.test$Expend)$y - 
+                                # college.test$Outstate)^2)
+# MSE.smoothspline.test
+MSE
 ```
 
-The MSE for the polynomial 
+The MSE for the polynomial regression is much higher than the MSE for the smoothing splines, but this makes a lot of sense when looking at the initial plots from 2.c). For the `Expend` variable, it seems like the data have a clearer trend than for the `Terminal` variable, and therefore the MSE is much lower. 
 
-MSE is `r sprintf("%.0f",MSE.smoothspline.train )` for the train set, and `r sprintf("%.0f",MSE.smoothspline.test)` for the
 
 # Problem 3 (9p)
 
@@ -346,6 +343,20 @@ d.test=d.diabetes$ctest
 
 ## a) (2P) - Multiple choice
 
+```{r}
+attach(d.train)
+summary(d.train)
+str(d.train)
+plot(glu,diabetes,col="red")
+points(bmi,diabetes,col="blue")
+plot(npreg)
+plot(log(npreg))
+max(npreg)
+
+
+```
+
+
 Start by getting to know the _training data_, by producing summaries and plots. Which of the following statements are true, which false? 
 
  (i) Females with high glucose levels and higher bmi seem to have a higher risk for diabetes.
@@ -353,15 +364,21 @@ Start by getting to know the _training data_, by producing summaries and plots. 
  (iii) BMI and triceps skin fold thickness seem to be positively correlated.
  (iv) The distribution of the number of pregnancies per woman seems to be a bit skewed and a transformation of this variable could therefore be appropriate.
 
+ (i)
+ (ii) TRUE
+ (iii) TRUE
+ (iv) 
 
 ## b) (4P) 
 Fit a support vector classifier (linear boundary) and a support vector machine (radial boundary) to find good functions that predict the diabetes status of a patient. Use cross-validation to find a good cost parameter (for the linear boundary) and a good combination of cost _and_ $\gamma$ parameters (for the radial boundary). Report the confusion tables and misclassification error rates for the test set in both cases. Which classifier do you prefer and why?
 (Do not use any variable transformations or standardizations to facilitate correction).
 
 **R-hints:** The response variable must be converted into a factor variable before you continue.
-```{r,eval=F,echo=T}
+```{r 4b,eval=T,echo=T}
 d.train$diabetes <- as.factor(d.train$diabetes)
 d.test$diabetes <- as.factor(d.test$diabetes)
+library(e1071)
+
 ```
 
 To run cross-validation over a grid of two tuning parameters, you can use the `tune()` function where `ranges` defines the grid points as follows: 

@@ -307,8 +307,6 @@ Select one method from Module 8 (tree-based methods) in order to build a good mo
  
  
 
- 
-
 
 
 ## c) (2p)
@@ -333,18 +331,18 @@ We will use the classical data set of _diabetes_ from a population of women of P
 We will use a training set (called `d.train`) with 300 observations (200 non-diabetes and 100 diabetes cases) and a test set (called `d.test`) with 232 observations (155 non-diabetes and 77 diabetes cases). Our aim is to make a classification rule for the presence of diabetes (yes/no) based on the available data. You can load the data as follows:
 
 
-```{r}
+```{r, eval = TRUE, echo = FALSE}
 id <- "1Fv6xwKLSZHldRAC1MrcK2mzdOYnbgv0E" # google file ID
 d.diabetes <- dget(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
 d.train=d.diabetes$ctrain
 d.test=d.diabetes$ctest
+attach(d.train)
 ```
 
 
 ## a) (2P) - Multiple choice
 
 ```{r}
-attach(d.train)
 summary(d.train)
 str(d.train)
 plot(glu,diabetes,col="red")
@@ -378,12 +376,27 @@ Fit a support vector classifier (linear boundary) and a support vector machine (
 d.train$diabetes <- as.factor(d.train$diabetes)
 d.test$diabetes <- as.factor(d.test$diabetes)
 library(e1071)
+```
+
+
+```{r 4b2,}
+svmfit = svm(diabetes~., data=d.train, kernel="linear", cost = 0.1, scale = FALSE)
+plot(svmfit,d.train$bmi,d.train$npreg)
 
 ```
 
+
 To run cross-validation over a grid of two tuning parameters, you can use the `tune()` function where `ranges` defines the grid points as follows: 
-```{r,eval=F,echo=T}
-tune(..., formula, kernel=...,ranges=list(cost=c(...), gamma=c(...)))
+```{r,eval=T,echo=T}
+set.seed(1)
+tune.out = tune(svm,diabetes~.,data=d.train,kernel="linear", ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+
+best.mod = tune.out$best.model
+summary(best.mod)
+
+ypred  = predict(best.mod,d.test)
+table(predict=ypred, truth = d.test$diabetes)
+
 ```
 
 ## c) (2P)

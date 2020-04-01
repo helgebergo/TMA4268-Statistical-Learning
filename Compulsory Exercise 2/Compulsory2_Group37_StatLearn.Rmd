@@ -379,23 +379,24 @@ library(e1071)
 ```
 
 
-```{r 4b2,}
-svmfit = svm(diabetes~., data=d.train, kernel="linear", cost = 0.1, scale = FALSE)
-plot(svmfit,d.train$bmi,d.train$npreg)
-
-```
-
-
 To run cross-validation over a grid of two tuning parameters, you can use the `tune()` function where `ranges` defines the grid points as follows: 
-```{r,eval=T,echo=T}
-set.seed(1)
-tune.out = tune(svm,diabetes~.,data=d.train,kernel="linear", ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+```{r}
+svmfit = svm(diabetes~., data=d.train, kernel="linear", cost = 0.1)
 
-best.mod = tune.out$best.model
+set.seed(1)
+tune.out.linear = tune(svm,diabetes~.,data=d.train,kernel="linear", ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+
+best.mod = tune.out.linear$best.model
 summary(best.mod)
 
 ypred  = predict(best.mod,d.test)
 table(predict=ypred, truth = d.test$diabetes)
+
+```
+
+
+```{r}
+tune.out.radial = tune(svm,diabetes~.,data=d.train,kernel="radial", ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
 
 ```
 

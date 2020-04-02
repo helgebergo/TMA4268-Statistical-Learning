@@ -482,9 +482,9 @@ qda.error
 <!-- (iii) Logistic regression, LDA and support vector machines tend to perform similar when decision boundaries are linear, unless classes are linearly separable. -->
 <!-- (iv) An advantage of logistic regression over SVMs is that it is easier to do feature selection and to interpret the results.  -->
 
- (i) 
+ (i) FALSE
  (ii) FALSE
- (iii) 
+ (iii) TRUE
  (iv) TRUE
 
 ## e) (2P) Link to logistic regression and hinge loss.
@@ -495,7 +495,19 @@ $$ \log(1+\exp(-y_i f({\boldsymbol x}_i)))$$
 is the deviance for the $y=-1,1$ encoding in a logistic regression model.  
 **Hint**: $f({\boldsymbol x}_i)$ corresponds to the linear predictor in the logistic regression approach.
 
+Using $f({\boldsymbol x}_i)$ as corresponding to the linear predictor in the logistic regression approach,
 
+$$ f({\boldsymbol x)}_i = \frac{e^{\beta_0 + \beta_1x_{i1} + ... + \beta_p x_{ip}}}
+{1 + e^{\beta_0 + \beta_1x_{i1} + ... + \beta_p x_{ip}}} $$
+
+the logistic regression model is on the form
+
+$$ p_i = \frac{e^{f({\boldsymbol x}_i)}}{1 + e^{f({\boldsymbol x}_i)}}$$.
+
+In logistic regression, the observations contribute by a weight $p_i(1-p_i)$, so the regression model can be rewritten to
+
+$$ f({\boldsymbol x}_i) = \log(\frac{p_i}{1-p_i}) $$
+This means that the loss function $ \log(1 + exp(-y_if({\boldsymbol x}_i)) $ is the deviance for the $y=-1,1$ encoding in a logistic regression model. 
 
 # Problem 5 (10P)
 

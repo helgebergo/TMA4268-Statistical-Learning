@@ -8,7 +8,7 @@ output:
     # html_document
     #word_document: default
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
   
 ```{r setup, include=FALSE}
@@ -373,78 +373,119 @@ hist(d.train$npreg)
 
 <!-- **R-hints:** The response variable must be converted into a factor variable before you continue. -->
 
-```{r 4b1,eval=T,echo=T}
+First, we convert the variables to factors, and fit a support vector classifier using the `e1071` package and the `svm`function, and cross validation to find the best cost parameter.
+
+```{r svm.linear, eval = T, echo = T}
 d.train$diabetes <- as.factor(d.train$diabetes)
 d.test$diabetes <- as.factor(d.test$diabetes)
 library(e1071)
-```
-
-
-```{r svm.linear}
 set.seed(1)
+
 svm.linear = tune(svm,diabetes~.,data=d.train,kernel="linear", 
-                       ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
-
-svm.linear.best = svm.linear$best.model
-# summary(svm.linear.best)
-
-svm.linear.pred  = predict(svm.linear.best,d.test)
+                  ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+svm.linear.pred  = predict(svm.linear$best.model,d.test)
 svm.linear.table = table(predict=svm.linear.pred, truth = d.test$diabetes)
 svm.linear.error = sum(svm.linear.table[2:3]) / sum(svm.linear.table)
+```
+
+The confusion table and the misclassification error rate is: 
+
+```{r}
 svm.linear.table
 svm.linear.error
 ```
 
+Then, a support vector machine was fitted, again with cross validation, but this time to find the optimal combination of cost and $\gamma$. 
 
 ```{r svm.radial}
 svm.radial = tune(svm,diabetes~.,data=d.train,kernel="radial", 
                        ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100),
                                      gamma=c(0,0001, 0.001,0.01,0.1,1,5,10,100)))
-svm.radial.best = svm.radial$best.model
-# summary(svm.radial.best)
-
-svm.radial.pred  = predict(svm.radial.best,d.test)
+svm.radial.pred  = predict(svm.radial$best.model,d.test)
 svm.radial.table = table(predict=svm.radial.pred, truth = d.test$diabetes)
 svm.radial.error = sum(svm.radial.table[2:3]) / sum(svm.radial.table)
-svm.radial.table
-svm.radial.error
 
 ```
+
+The confusion table and the misclassification error rate is: 
+
+```{r}
+svm.radial.table
+svm.radial.error
+```
+
+Comparing these two, the misclassification error rate is actually identical for the given test set, but there are some differences in the confusion matrices. There are more negative predictions in the radial model, both true and false negatives, 3 more on each. This is interesting, and shows the difference between the two types of boundaries and the impact a difference in cost and $\gamma$ gives. For the given data, the preferred model would probably be the linear one, as this is both simpler, and gives a higher number of true positives. In the case of diabetes, misclassification in the form of false positives is better than false negatives, in our opinion. 
+
 
 ## c) (2P)
 
 <!-- Compare the performance of the two classifiers from b) to _one other classification method_ that you have learned about in the course. Explain your choice and report the confusion table and misclassification error rate on the test set for your chosen method and interpret what you see. What are advantages/disadvantages of your chosen method with respect to SVMs? -->
 
+Comparing the SVMs to a linear discriminant analysis, the following code gives a fit using LDA. 
 
 ```{r}
 lda.fit = lda(diabetes~., data = d.train)
 lda.pred = predict(lda.fit,d.test)
 lda.table = table(predict=lda.pred$class, truth = d.test$diabetes)
 lda.error = sum(lda.table[2:3]) / sum(lda.table)
+lda.table
 lda.error
 ```
 
+As can be seen, the misclassification rate is very similar, with only one less false negative compared to the support vector classifier. The main difference between the two methods is that the SVM uses only some observations as vectors to create the separating hyperplane, while the LDA uses all observations. This makes SVM less dependant on observations far from the hyperplane, while LDA is more affected by outliers in the data. 
 
-```{r, eval=T, echo=F}
+
+```{r ROCR, include = FALSE}
+library(ROCR)
+rocplot=function(pred, truth, ...){
+  predob = prediction (pred, truth)
+  perf = performance (predob , "tpr", "fpr") 
+  plot(perf ,...)}
+
+svmfit.opt = svm(diabetes~., data=d.train, kernel="radial", gamma=0.01, cost=10,decision.values=T)
+fitted.train = attributes(predict(svmfit.opt,d.train,decision.values=TRUE))$decision.values
+
+par(mfrow=c(1,2))
+rocplot(fitted.train,d.train$diabetes,main="Training Data")
+
+svmfit.flex=svm(diabetes~., data=d.train, kernel="radial", gamma=1, cost=10, decision.values=T)
+fitted.flex=attributes(predict(svmfit.flex,d.train,decision.values=T))$decision.values
+rocplot(fitted.flex,d.train$diabetes,add=T,col="red")
+
+fitted.test=attributes(predict(svmfit.opt,d.test,decision.values=T))$decision.values
+rocplot(fitted.test,d.test$diabetes,main="Test Data")
+
+fitted.test.flex=attributes(predict(svmfit.flex,d.test,decision.values=T))$decision.values
+rocplot(fitted.test.flex,d.test$diabetes,add=T,col="red")
+
+```
+
+<!-- The fact that the support vector classifier’s decision rule is based only on a potentially small subset of the training observations (the support vectors) means that it is quite robust to the behavior of observations that are far away from the hyperplane. This property is distinct from some of the other classification methods that we have seen in preceding chapters, such as linear discriminant analysis. Recall that the LDA classification rule depends on the mean of all of the observations within each class, as well as the within-class covariance matrix computed using all of the observations. In contrast, logistic regression, unlike LDA, has very low sensitivity to observations far from the decision boundary. In fact we will see in Section 9.5 that the support vector classifier and logistic regression are closely related. -->
+
+
+```{r, include = FALSE}
 qda.fit = qda(diabetes~., data = d.train)
 qda.pred = predict(qda.fit,d.test)
 qda.table = table(predict=qda.pred$class, truth = d.test$diabetes)
 qda.error = sum(qda.table[2:3]) / sum(qda.table)
-
+qda.table
+qda.error
 ```
 
 
 ## d) (2P) - Multiple choice
 
-Which of the following statements are true, which false? 
+<!-- Which of the following statements are true, which false?  -->
 
-(i) Under standard conditions, the maximal margin hyperplane approach is equivalent to a linear discriminant analysis.
-(ii) Under standard conditions, the support vector classifier is equivalent to quadratic discriminant analysis.
-(iii) Logistic regression, LDA and support vector machines tend to perform similar when decision boundaries are linear, unless classes are linearly separable.
-(iv) An advantage of logistic regression over SVMs is that it is easier to do feature selection and to interpret the results.
+<!-- (i) Under standard conditions, the maximal margin hyperplane approach is equivalent to a linear discriminant analysis. -->
+<!-- (ii) Under standard conditions, the support vector classifier is equivalent to quadratic discriminant analysis. -->
+<!-- (iii) Logistic regression, LDA and support vector machines tend to perform similar when decision boundaries are linear, unless classes are linearly separable. -->
+<!-- (iv) An advantage of logistic regression over SVMs is that it is easier to do feature selection and to interpret the results.  -->
 
- 
-
+ (i) 
+ (ii) FALSE
+ (iii) 
+ (iv) TRUE
 
 ## e) (2P) Link to logistic regression and hinge loss.
 

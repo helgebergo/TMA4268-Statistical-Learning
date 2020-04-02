@@ -10,3 +10,5 @@ leaps
 Matrix
 glmnet
 e1071
+gplots
+ROCR

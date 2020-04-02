@@ -381,8 +381,6 @@ library(e1071)
 
 
 ```{r svm.linear}
-svmfit = svm(diabetes~., data=d.train, kernel="linear", cost = 0.1)
-
 set.seed(1)
 svm.linear = tune(svm,diabetes~.,data=d.train,kernel="linear", 
                        ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
@@ -401,7 +399,7 @@ svm.linear.error
 ```{r svm.radial}
 svm.radial = tune(svm,diabetes~.,data=d.train,kernel="radial", 
                        ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100),
-                                     gamma=c(0.001,0.01,0.1,1,5,10,100)))
+                                     gamma=c(0,0001, 0.001,0.01,0.1,1,5,10,100)))
 svm.radial.best = svm.radial$best.model
 # summary(svm.radial.best)
 
@@ -415,7 +413,7 @@ svm.radial.error
 
 ## c) (2P)
 
-Compare the performance of the two classifiers from b) to _one other classification method_ that you have learned about in the course. Explain your choice and report the confusion table and misclassification error rate on the test set for your chosen method and interpret what you see. What are advantages/disadvantages of your chosen method with respect to SVMs?
+<!-- Compare the performance of the two classifiers from b) to _one other classification method_ that you have learned about in the course. Explain your choice and report the confusion table and misclassification error rate on the test set for your chosen method and interpret what you see. What are advantages/disadvantages of your chosen method with respect to SVMs? -->
 
 
 ```{r}

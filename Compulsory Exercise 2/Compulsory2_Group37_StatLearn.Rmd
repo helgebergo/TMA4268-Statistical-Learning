@@ -4,7 +4,7 @@ title: "Compulsory Exercise 2: Group 37"
 author: "Anders Bendiksen and Helge Bergo"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
-    pdf_document
+    pdf_document:
     # html_document
     #word_document: default
 editor_options: 
@@ -490,7 +490,7 @@ qda.error
 ## e) (2P) Link to logistic regression and hinge loss.
 
 Look at slides 71-73 of Module 9. Show that the loss function
-$$ \log(1+\exp(-y_i f({\boldsymbol x}_i)))$$
+$$ \log(1+\exp(-y_i f({\boldsymbol x}_i))) $$
 
 is the deviance for the $y=-1,1$ encoding in a logistic regression model.  
 **Hint**: $f({\boldsymbol x}_i)$ corresponds to the linear predictor in the logistic regression approach.
@@ -502,12 +502,14 @@ $$ f({\boldsymbol x)}_i = \frac{e^{\beta_0 + \beta_1x_{i1} + ... + \beta_p x_{ip
 
 the logistic regression model is on the form
 
-$$ p_i = \frac{e^{f({\boldsymbol x}_i)}}{1 + e^{f({\boldsymbol x}_i)}}$$.
+$$ p_i = \frac{e^{f({\boldsymbol x}_i)}}{1 + e^{f({\boldsymbol x}_i)}}.$$
 
 In logistic regression, the observations contribute by a weight $p_i(1-p_i)$, so the regression model can be rewritten to
 
 $$ f({\boldsymbol x}_i) = \log(\frac{p_i}{1-p_i}) $$
-This means that the loss function $ \log(1 + exp(-y_if({\boldsymbol x}_i)) $ is the deviance for the $y=-1,1$ encoding in a logistic regression model. 
+This means that the loss function $$ \log(1 + exp(-y_if({\boldsymbol x}_i)) $$ is the deviance for the $y=-1,1$ encoding in a logistic regression model. 
+
+Set er der jddjuddu
 
 # Problem 5 (10P)
 

@@ -99,7 +99,7 @@ reg.summary = summary(regfit.fwd)
 
 ```
 
-To decide on which model is best, the number of variables used in the selection was plotted against `RSS`, `Cp`, `BIC` and `adjusted R`$^2$. 
+To decide on which model is best, the number of variables used in the selection was plotted against `RSS`, `Cp`, `BIC` and `adjusted R$^2$`. 
 
 ```{r p2d3, eval=TRUE, echo=TRUE, fig.width=5, fig.height=5}
 par(mfrow=c(2,2))
@@ -118,7 +118,7 @@ min.bic = which.min(reg.summary$bic)
 points(min.bic,reg.summary$bic[min.bic], col="black",cex=2,pch=20)
 ```
 
-The maximum `adjusted R`$^2$ is the one with `r max.adjr2` variables, with a value of `r reg.summary$adjr2[max.adjr2]`, shown as a filled dot in the upper right plot. This is also the same number of variables as for the lowest `Cp`. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted R`$^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. The model is then:
+The maximum `adjusted` $R^2$ is the one with `r max.adjr2` variables, with a value of `r reg.summary$adjr2[max.adjr2]`, shown as a filled dot in the upper right plot. This is also the same number of variables as for the lowest Cp. However, all the plots are pretty flat after around 6 or 7 variables used, and it seems like using only 6 variables still gives a good `adjusted` $R^2$ value of `r reg.summary$adjr2[6]`, without the increased complexity of adding 7 more variables. The model is then:
 
 ```{r}
 coef(regfit.fwd,6)
@@ -145,7 +145,7 @@ for (i in 1:17) {
 ```
 
 
-```{r, include=F}
+```{r, eval=TRUE, echo=TRUE }
 # plot(sqrt(val.errors),xlab="Number of variables", ylab="Root MSE",ylim=c(1500,5000) ,pch=19,type="b")
 # points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
 # legend("topright",legend=c("Training","Validation"),col=c("black","blue"),pch=19)
@@ -187,8 +187,8 @@ This was used on the test set, to get the MSE for the lasso.
 
 ```{r}
 lasso.pred = predict(lasso.model,s=best.lambda ,newx=x.test)
-MSE.lasso = mean((lasso.pred-y.test)^2)
-MSE.lasso
+MSE = mean((lasso.pred-y.test)^2)
+MSE
 ```
 
 Finally, the coefficients of the model are shown here: 
@@ -211,62 +211,17 @@ lasso.coef
 <!-- (iii) A natural cubic spline is linear beyond the boundary knots. -->
 <!-- (iv) A smoothing spline is (a shrunken version of) a natural cubic spline with knots at the values of all data points $x_i$ for $i=1,\ldots ,n$. -->
 
- (i) FALSE
- (ii) FALSE
- (iii) TRUE
- (iv) TRUE
+ (i) 
+ (ii) 
+ (iii) 
+ (iv) 
 
 ## b) 
 
-<!-- Write down the basis functions for a cubic spline with knots at the quartiles $q_1, q_2, q_3$ of variable $X$. -->
+Write down the basis functions for a cubic spline with knots at the quartiles $q_1, q_2, q_3$ of variable $X$.
 
-The basis representations for the cubic spline with three knots are as follows. 
 
-\begin{equation*}
-y_i = 
-\begin{cases}
- \beta_{01} + \beta_{11} x_i + \beta_{21} x_i^2 + \beta_{31} x^3_i +\epsilon_i 
-&\text{if} \hspace{0.5mm}-\infty\leq x \geq q_1\\
-\beta_{02}+\beta_{12}x_i+\beta_{22}x_i^2+\beta_{32}x^3_i+\epsilon_i +(x-q_1) 
-&\text{if} \hspace{5mm}q_1\leq x \geq q_2 \\
-\beta_{03}+\beta_{13}x_i+\beta_{23}x_i^2+\beta_{33}x^3_i+\epsilon_i + (x-q_2) 
-&\text{if} \hspace{5mm}q_2\leq x \geq q_3 \\
-\beta_{02}+\beta_{12}x_i+\beta_{22}x_i^2 + \beta_{32}x^3_i+\epsilon_i  
-&\text{if} \hspace{5mm}q_3\leq x \geq \infty
-\end{cases}
-\end{equation*}
-
-$X$ can be expressed as a vector of components $x_i$ 
-$$ X= [x_1, x_2, x_ 3, ..., x_n]$$
-
-And $Y$ can similarly be expressed as:
-$$ Y= [y_1, y_2, y_ 3, ..., y_n]$$
-
-With $i$ being a number 1 to $n$, and $n$ being the number of components in the $X$ and $Y$ vectors. 
-The basis functions are the functions or operations that are applied to $X$ in order to fit $Y$. 
-
-\begin{equation*}
-y_i = 
-\begin{cases}
-\beta_{01} + \beta_{11}B_1(x_i)+\beta_{21}B_2(x_i)+\beta_{31}B_3(x_i)_i+\epsilon_i 
-&\text{if} \hspace{0.5mm}-\infty\leq x \geq q_1 \\
-\beta_{02}+\beta_{12}B_1(x_i)+\beta_{22}B_2(x_i)+\beta_{32}B_3(x_i)+\epsilon_i +B_4(x, \zeta) 
-&\text{if} \hspace{5mm}q_1\leq x \geq q_2 \\
-\beta_{03}+\beta_{13}B_1/x_i)+\beta_{23}B_2(x_i)+\beta_{33}B_3(x_i)+\epsilon_i +B_4(x, \zeta) 
-&\text{if} \hspace{5mm}q_2\leq x \geq q_3 \\
-\beta_{02}+\beta_{12}B_1(x_i)+\beta_{22}B_2(x_i)+\beta_{32}B_3(x_i)+\epsilon_i
-&\text{if} \hspace{5mm}q_3\leq x \geq \infty
-\end{cases}
-\end{equation*}
-
-The basis functions; $B_1$, $B_2$, $B_3$, $B_4$ can then be expressed as:
-
-\begin{align*}
-B_1(x) &=x \\
-B_2(x) &= x^2\\
-B_3(x) &= x^3\\
-B_4(x) &= (x-\zeta)^3
-\end{align*}
+## c) 
 
 ```{r 2c1, echo=FALSE}
 library(leaps)
@@ -276,9 +231,8 @@ co.names =  names(coef.for)[-1]
 co.names[1] = "Private" 
 ```
 
-## c)
-
 <!-- We continue with using the `College` dataset that we used in problem 1. Investigate the relationships between `Outstate` and the following 6 predictors (using the training dataset `college.train`): -->
+
 <!-- Create some informative plots and say which of the variables seem to have a linear relationship with the response, and which might benefit from a non-linear transformation (like e.g. a spline). -->
 
 The variables 
@@ -427,6 +381,7 @@ text(tree.prune, pretty = 0, cex = 0.6)
 
 tree.predict = predict(tree.prune, newdata = college.test)
 MSE.tree = mean((tree.predict - college.test$Outstate)^2)
+print(MSE.tree)
 ```
 
 
@@ -440,32 +395,25 @@ Then, doing the same using bagging, the MSE was calculated again.
 ```{r }
 tree.bag <- bagging(Outstate~.,data=college.train, nbagg=25)
 tree.bag.predict <- predict(tree.bag, college.test)
+
 MSE.bag = mean((tree.bag.predict - college.test$Outstate)^2)
+print(MSE.bag)
 ```
 
 Finally, a random forest was created with the dataset. 
 
 ```{r}
 tree.randomForest = randomForest(Outstate~., data = college.train, mtry =
-                        ncol(college.train)/3, ntree = 500,importance = TRUE)
+                                   ncol(college.train)/3, ntree = 500,importance = TRUE)
 randomForest.predict = predict(tree.randomForest, newdata = college.test)
+
+# plot(tree.randomForest)
+# text(tree.fit.randomForest, pretty=0)
+# summary(tree.randomForest)
+
 MSE.randomForest = mean((randomForest.predict - college.test$Outstate)^2)
+print(MSE.randomForest)
 ```
-
-The resulting MSEs are shown for the three methods in the following table. 
-
-\begin{table}[ht]
-\centering
-\begin{tabular}{l l}
-\hline
-\textbf{Method} & \textbf{MSE} \\
-\hline
-Regression tree & `r signif(MSE.tree,digits=2)` \\
-Bagging  & `r signif(MSE.bag,digits=2)` \\
-Random forest & `r signif(MSE.randomForest,digits=2)` \\
-\hline
-\end{tabular}
-\end{table}
 
 As can be seen, the MSE is lowest for the random forest model, and it is significantly lower than both the pruned regression tree, and the bagging. 
 <!-- Just about 1500 USD in actual values.  -->
@@ -475,29 +423,7 @@ This is most probably because of the decorrelated trees. Bagging was better than
 
 <!-- Compare the results (tests MSEs) among all the methods you used in Problems 1-3. Which method perform best in terms of prediction error? Which method would you choose if the aim is to develop an interpretable model? -->
 
-The results from Problem 1-3 are shown in the table below, in chronological order. 
-
-\begin{table}[ht]
-\centering
-\begin{tabular}{l l}
-\hline
-\textbf{Method} & \textbf{MSE} \\
-\hline
-Forward selection & `r signif(val.errors[6],digits=2)` \\
-Lasso & `r signif(MSE.lasso,digits=2)` \\
-Polynomial regression & `r signif(MSE.poly[which.min(MSE.poly)],digits=2)` \\
-Smoothing spline & `r signif(MSE.smoothspline.train,digits=2)` \\
-Regression tree & `r signif(MSE.tree,digits=2)` \\
-Bagging  & `r signif(MSE.bag,digits=2)` \\
-Random forest & `r signif(MSE.randomForest,digits=2)` \\
-\hline
-\end{tabular}
-\end{table}
-
-In terms of prediction error, the best model is by far the random forest, compared to all the others. However, the random forest model is not the most interpretable model, and if that would be a goal, the pruned regression tree, lasso, or forward selection would be better models. They have a slightly higher MSE, but this might be worth it for the simplicity. All in all, the forward selection model might be the best model when interpretability is desired. 
-
-<!-- However, if the goal is to develop an interpretable model, the model chosen would probably be the pruned regression tree, as this requires the least statistical knowledge. This has a higher MSE, but this might be a worth trade-off for the added interpretability.  -->
-
+In terms of prediction error, the best model is by far the random forest, compared to the others used. However, if the goal is to develop an interpretable model, the model chosen would probably be the pruned regression tree, as this requires the least statistical knowledge. This has a higher MSE, but this might be a worth trade-off for the added interpretability. 
 
 
 # Problem 4
@@ -801,19 +727,7 @@ We can see that the 5 first principal components stand for 21% of the total vari
 
 Use your results from PCA to find which genes that vary the most across the two groups.
 
-In order to find the genes that vary the most across one can perform PCA on the untransposed dataset GeneData. The Principal Components that have the most variance would be the genes that vary the most. 
-```{r }
-tr.genedata <- t(GeneData)
-pca.gene = prcomp(tr.genedata, scale=TRUE)
-gene <- pca.gene$rotation[,1]
-gene2 <- abs(gene)
-gene3 <- sort(gene2, decreasing = TRUE)
-print(names(gene3[1:5]))
-
-
-```
-Thus, the 5 genes that contribute most variance to PC1 are; D8, D2, D19, D14 and D1.
-
+The genes that show most variance across the 
 
 ## f) 
 
@@ -823,6 +737,4 @@ Use K-means to separate the tissue samples into two groups. Plot the values in a
 km <- kmeans(GeneData, 2, nstart=20)
 plot(pca$x[,1:2], col=km$cluster, pca=c(GeneData[1:20], GeneData[21:40]))
 ```
-
-The error rate of the K-means is zero. This can be seen by the perfect separation of the two groups. 
 

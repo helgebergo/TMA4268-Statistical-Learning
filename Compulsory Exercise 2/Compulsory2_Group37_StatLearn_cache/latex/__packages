@@ -12,3 +12,13 @@ glmnet
 e1071
 gplots
 ROCR
+lattice
+caret
+Ecfun
+Ecdat
+ipred
+vcd
+rpart
+tree
+randomForest
+dendextend

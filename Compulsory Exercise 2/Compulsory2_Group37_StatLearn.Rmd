@@ -13,18 +13,10 @@ editor_options:
   
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, message=FALSE, warning=FALSE, strip.white=TRUE, prompt=FALSE,
-                      cache = TRUE, size="scriptsize", fig.width=4, fig.height=4, fig.align = "center")
-
+knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, message=FALSE, warning=FALSE, strip.white=TRUE, prompt=FALSE, cache = TRUE, size="scriptsize", fig.width=4, fig.height=4, fig.align = "center")
 ```
 
 ```{r,eval=TRUE,echo=FALSE}
-# install.packages("knitr") #probably already installed
-# install.packages("rmarkdown") #probably already installed
-# install.packages("ggplot2") #plotting with ggplot
-# install.packages("ggfortify")  
-# install.packages("MASS")  
-# install.packages("dplyr")  
 library(knitr)
 library(rmarkdown)
 library(ggplot2)
@@ -34,19 +26,46 @@ library(dplyr)
 ```
 
 
-# Problem 1 (10p)
+# Problem 1 
 
-## a) Ridge Regression (2p)
+## a) Ridge Regression 
 
-Show that the ridge regression estimator is $\hat\beta_{Ridge} = (X^T X + \lambda I)^{-1} X^T y$.
+<!-- Show that the ridge regression estimator is $\hat\beta_{Ridge} = (X^T X + \lambda I)^{-1} X^T y$. -->
+
+Using $\lambda$ as a tuning parameter and $\beta$ as the ridge regression coefficients, the goal is to minimize
+
+$$ RSS + \lambda \sum_{j=1}^{p} \beta_j^2 $$
+
+where $\lambda$ is greater than zero, and the residual sum of squares is
+
+$$RSS = \sum_{i=1}^n\large(y_i - \hat\beta_0 - \sum_{j=1}^p\hat\beta_jx_{ij})^2$$
+Setting $\hat\beta_0=0$, in other words setting the mean to zero, the first equation can be rewritten as 
+
+$$ (y - X\hat\beta_{Ridge})^T(y - X\hat\beta_{Ridge}) + \lambda\hat\beta_{Ridge}^T \hat\beta_{Ridge} $$
+
+When this is differentiated with respect to $\hat\beta_{Ridge}$ and equal to zero, we get
+
+$$ -2X^T (y-X\hat\beta_{Ridge}) + 2\lambda\hat\beta_{Ridge} = 0 $$
+$$ X^T X\hat\beta_{Ridge} + \lambda\hat\beta_{Ridge} = X^Ty $$
+$$ \hat\beta_{Ridge} = (X^T X + \lambda I)^{-1} X^Ty $$
 
 
-## b) (2p)
+## b) 
 
-Find the expected value and the variance-covariance matrix of $\hat\beta_{Ridge}$ (1P each).
+<!-- Find the expected value and the variance-covariance matrix of $\hat\beta_{Ridge}$ (1P each). -->
 
+Since the expected value of $y = X \beta + \epsilon$ is $X\beta$, the expectation value of $\hat\beta_{Ridge}$ is
 
-## c) (2P) - Multiple choice
+$$\text{E}[\hat\beta_{Ridge}] = (X^TX + \lambda I)^{-1}X^TE[y] $$  
+$$ = (X^TX + \lambda I)^{-1}X^TX\beta $$
+
+The variance-covariance matrix is then (since $\text{Var}[y] = \sigma^2$)
+
+$$ \text{Var}[\hat\beta_{Ridge}] = \text{Var}[(X^TX + \lambda I)^{-1}X^Ty]$$
+$$ = (X^TX + \lambda I)^{-1}X^T \text{Var}[y]((X^TX + \lambda I)^{-1}X^T)^T$$
+$$ \sigma^2(X^TX + \lambda I)^{-1}X^T X  (X^TX + \lambda I)^{-1})^T $$
+
+## c) Multiple choice
 
 (i)   TRUE
 (ii)  FALSE
@@ -66,9 +85,10 @@ college.test = College[-train.ind,]
 
 ```{r,echo=F,eval=F}
 str(College)
-#Using the out-of-state tuition (variable `Outstate`) as response, apply forward selection in order to identify a satisfactory model that uses only a subset of all the variables in the dataset in order to predict the response.
-#Choose a model according to one of the criteria that you know and briefly say why.
 ```
+
+<!-- Using the out-of-state tuition (variable `Outstate`) as response, apply forward selection in order to identify a satisfactory model that uses only a subset of all the variables in the dataset in order to predict the response. -->
+<!-- Choose a model according to one of the criteria that you know and briefly say why. -->
 
 After dividing the data into a training and test set, the `regsubsets` function was used to create a forward selection model on the data, from the `leaps`-library.
 
@@ -122,6 +142,10 @@ for (i in 1:17) {
     val.errors[i] = mean((college.test$Outstate-pred)^2)
 }
 
+```
+
+
+```{r, eval=TRUE, echo=TRUE }
 # plot(sqrt(val.errors),xlab="Number of variables", ylab="Root MSE",ylim=c(1500,5000) ,pch=19,type="b")
 # points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
 # legend("topright",legend=c("Training","Validation"),col=c("black","blue"),pch=19)
@@ -133,12 +157,10 @@ val.errors[6]
 ```
 
 
-## e) (2p)
+## e) 
 
-```{r eval=F, echo=F}
-# Now do model selection using the same dataset as in (d) using the Lasso method. How did you select the tuning parameter $\lambda$?
-# Report the set of variables that was selected and the MSE on the test set.
-```
+<!-- Now do model selection using the same dataset as in (d) using the Lasso method. How did you select the tuning parameter $\lambda$? -->
+<!-- Report the set of variables that was selected and the MSE on the test set. -->
 
 Using the Lasso method from the `glmnet`-library, a new model was selected. 
 
@@ -157,12 +179,11 @@ To select the tuning parameter $\lambda$, cross-validation was performed, and th
 
 ```{r, fig.width=4, fig.height=4}
 cv.out = cv.glmnet(x.train,y.train, alpha = 1)
-plot(cv.out)
 best.lambda = cv.out$lambda.min
 best.lambda
 ```
 
-This was used on the test set, to get the MSE for the 
+This was used on the test set, to get the MSE for the lasso. 
 
 ```{r}
 lasso.pred = predict(lasso.model,s=best.lambda ,newx=x.test)
@@ -179,30 +200,28 @@ lasso.coef
 ```
  
 
-# Problem 2 (9p)
+# Problem 2 
 
-## a) (2p) - Multiple choice
+## a) Multiple choice
 
-Which of the following statements are true, which false? 
+<!-- Which of the following statements are true, which false?  -->
 
-(i) A regression spline of order 3 with 4 knots has 8 basis functions.
-(ii) A regression spline with polynomials of degree $M-1$ has continuous derivatives up to order $M-2,$ but not at the knots.
-(iii) A natural cubic spline is linear beyond the boundary knots.
-(iv) A smoothing spline is (a shrunken version of) a natural cubic spline with knots at the values of all data points $x_i$ for $i=1,\ldots ,n$.
+<!-- (i) A regression spline of order 3 with 4 knots has 8 basis functions. -->
+<!-- (ii) A regression spline with polynomials of degree $M-1$ has continuous derivatives up to order $M-2,$ but not at the knots. -->
+<!-- (iii) A natural cubic spline is linear beyond the boundary knots. -->
+<!-- (iv) A smoothing spline is (a shrunken version of) a natural cubic spline with knots at the values of all data points $x_i$ for $i=1,\ldots ,n$. -->
 
-(i)   
-(ii)  
-(iii) 
-(iv)  
- 
+ (i) 
+ (ii) 
+ (iii) 
+ (iv) 
 
-## b) (2p)
+## b) 
 
 Write down the basis functions for a cubic spline with knots at the quartiles $q_1, q_2, q_3$ of variable $X$.
 
 
-
-## c) (2p)
+## c) 
 
 ```{r 2c1, echo=FALSE}
 library(leaps)
@@ -210,19 +229,21 @@ for.reg = regsubsets(Outstate~., data = college.train, method = "forward")
 coef.for = coef(for.reg, id = 6)
 co.names =  names(coef.for)[-1]
 co.names[1] = "Private" 
-#We continue with using the `College` dataset that we used in problem 1. Investigate the relationships between `Outstate` and the following 6 predictors (using the training dataset `college.train`): 
 ```
 
+<!-- We continue with using the `College` dataset that we used in problem 1. Investigate the relationships between `Outstate` and the following 6 predictors (using the training dataset `college.train`): -->
 
-```{r, echo=F,eval=F}
+<!-- Create some informative plots and say which of the variables seem to have a linear relationship with the response, and which might benefit from a non-linear transformation (like e.g. a spline). -->
+
+The variables 
+```{r, echo = FALSE}
 co.names
-#Create some informative plots and say which of the variables seem to have a linear relationship with the response, and which might benefit from a non-linear transformation (like e.g. a spline).
 ```
-
+were plotted against `Outstate` to look at the relationship between the variables. 
 
 
 ```{r 2c3, fig.width=6, fig.height=4, echo=FALSE}
-par(mfrow=c(2,3))
+par(mfrow=c(2,3), cex=0.5)
 plot(College$Private,College$Outstate, xlab="Private", ylab="Outstate")
 plot(College$Room.Board,College$Outstate, xlab="Room.Board", ylab="Outstate")
 plot(College$Terminal,College$Outstate, xlab="Terminal", ylab="Outstate")
@@ -231,92 +252,181 @@ plot(College$Expend,College$Outstate, xlab="Expend", ylab="Outstate")
 plot(College$Grad.Rate,College$Outstate, xlab="Grad.Rate", ylab="Outstate")
 
 ```
+
 From these plots, it seems like `Room.board`, `perc.alumni` and `Grad.Rate` all have quite linear relationships with `Outstate`, while both `Terminal` and `Expend` seem to follow a non-linear relationship. 
 
-## d) (3P)
+## d) 
 
-(i) Fit polynomial regression models for `Outstate` with `Terminal` as the only covariate for a range of polynomial degrees ($d = 1,\ldots,10$) and plot the results. Use the training data (`college.train`) for this task.
+### (i) 
 
+<!-- Fit polynomial regression models for `Outstate` with `Terminal` as the only covariate for a range of polynomial degrees ($d = 1,\ldots,10$) and plot the results. Use the training data (`college.train`) for this task. -->
+
+The data from `college.train` was fitted with polynomial regression for the degrees $d = 1,\ldots,10$. The code and plot is shown below. 
 
 ```{r 2di}
 cols = rainbow(10)
 deg = 1:10
 polyfunc = function(d) {
   model = lm(Outstate ~ poly(Terminal,d), data=college.train)
-  lines(cbind(college.train$Terminal, model$fit)[order(college.train$Terminal),],col=cols[d])
+  lines(cbind(college.train$Terminal,model$fit)[order(college.train$Terminal),],
+        col=cols[d])
   pred = predict(model, college.train)
   mean((pred - college.train$Outstate)^2)
 }
 plot(college.train$Terminal, college.train$Outstate, col = "gray", pch=19, 
      cex = 0.5, xlab = "Terminal", ylab = "Outstate")
-MSE = sapply(deg, polyfunc)
+MSE.poly = sapply(deg, polyfunc)
 legend("topleft",legend = paste("degree = ",deg), col = cols, cex = 0.4)
 ```
 
 
-(ii) Still for the training data, choose a suitable smoothing spline model to predict `Outstate` as a function of `Expend` (again as the only covariate) and plot the fitted function into the scatterplot of `Outstate` against `Expend`. How did you choose the degrees of freedom?
+### (ii) 
+<!-- Still for the training data, choose a suitable smoothing spline model to predict `Outstate` as a function of `Expend` (again as the only covariate) and plot the fitted function into the scatterplot of `Outstate` against `Expend`. How did you choose the degrees of freedom? -->
 
 
 ```{r 2dii, eval=TRUE, echo=TRUE}
 library(splines)
-attach(college.train)
-expend.range = range(Expend)
-expend.grid = seq(from=expend.range[1],to=expend.range[2])
-
-plot(Expend, Outstate, col = "darkgrey", pch=19, cex = 0.5)
-fit.smoothspline = smooth.spline(Expend,Outstate,cv=TRUE)
+expend.range = range(college.train$Expend)
+expend.grid = seq(from=expend.range[1], to=expend.range[2])
+plot(college.train$Expend, college.train$Outstate, col = "darkgrey", pch=19, 
+     cex = 0.5, xlab = "Expend", ylab = "Oustate")
+fit.smoothspline = smooth.spline(college.train$Expend, college.train$Outstate,cv=TRUE)
 lines(fit.smoothspline)
-# legend("bottomright",legend=paste("DF =",round(fit.smoothspline$df,2)),cex=.8)
 
 ```
 
 The degrees of freedom was chosen using cross-validation, and the result was `r round(fit.smoothspline$df,3)`. 
 
-(iii) Report the corresponding training MSE for (i) and (ii). Did you expect that?
 
-```{r, eval=TRUE, echo=TRUE, tidy=T}
+### (iii) 
+<!-- Report the corresponding training MSE for (i) and (ii). Did you expect that? -->
+
+```{r, eval=TRUE, echo=TRUE}
 MSE.smoothspline.train = mean((predict(fit.smoothspline, college.train$Expend)$y - 
                                  college.train$Outstate)^2)
 MSE.smoothspline.train
-# MSE.smoothspline.test = mean((predict(fit.smoothspline, college.test$Expend)$y - 
-                                # college.test$Outstate)^2)
-# MSE.smoothspline.test
-MSE
+MSE.poly
 ```
 
 The MSE for the polynomial regression is much higher than the MSE for the smoothing splines, but this makes a lot of sense when looking at the initial plots from 2.c). For the `Expend` variable, it seems like the data have a clearer trend than for the `Terminal` variable, and therefore the MSE is much lower. 
 
 
-# Problem 3 (9p)
-
-## a) (2P) - Multiple choice
-
-Which of the following statements are true, which false?
-
-(i) Regression trees cannot handle categorical predictors.
-(ii) Regression and classification trees are easy to interpret.
-(iii) The random forest approaches improves bagging, because it reduces the variance of the predictor function by decorrelating the trees.
-(iv) The number of trees $B$ in bagging and random forests is a tuning parameter.
-
- 
-
-## b) (4P)
-
-Select one method from Module 8 (tree-based methods) in order to build a good model to predict `Outstate` in the `College` dataset that we used in problems 1 and 2.  Explain your choice (pros/cons?) and how you chose the tuning parameter(s). Train the model using the training data and report the MSE for the test data. 
-
- 
- 
+```{r, include = FALSE}
+# MSE.smoothspline.test = mean((predict(fit.smoothspline, college.test$Expend)$y - 
+                                # college.test$Outstate)^2)
+# MSE.smoothspline.test
+```
 
 
 
-## c) (2p)
+# Problem 3 
 
-Compare the results (tests MSEs) among all the methods you used in Problems 1-3. Which method perform best in terms of prediction error? Which method would you choose if the aim is to develop an interpretable model?
+## a) Multiple choice
 
- 
+<!-- Which of the following statements are true, which false? -->
 
-# Problem 4 (12P)
+<!-- (i) Regression trees cannot handle categorical predictors. -->
+<!-- (ii) Regression and classification trees are easy to interpret. -->
+<!-- (iii) The random forest approaches improves bagging, because it reduces the variance of the predictor function by decorrelating the trees. -->
+<!-- (iv) The number of trees $B$ in bagging and random forests is a tuning parameter. -->
 
+ (i) TRUE
+ (ii) TRUE
+ (iii) TRUE
+ (iv) FALSE
+
+## b)
+
+<!-- Select one method from Module 8 (tree-based methods) in order to build a good model to predict `Outstate` in the `College` dataset that we used in problems 1 and 2.  Explain your choice (pros/cons?) and how you chose the tuning parameter(s). Train the model using the training data and report the MSE for the test data.  -->
+
+In order to find the best method for the data at hand, we first considered regression trees. This was quite obvious, as the tuition is not a "classifiable" value. Next up is bagging and random forest. Random forest is probably the best choice of these, as the trees are decorrelated. We will however find the MSE of all these three methods, and compare them to each other. 
+
+```{r, echo=FALSE}
+# library(caret) 
+# library(Ecdat)
+library(ipred)
+# library(vcd)
+# library(rpart)
+library(tree)
+library(randomForest)
+# library(Ecfun)
+```
+
+
+```{r, include=FALSE}
+# train.ind = sample(1:nrow(College), 0.5 * nrow(College))
+# college.train = College[train.ind, ]
+# college.test = College[-train.ind, ]
+
+# tree <- tree(Outstate ~ Apps + Accept + Enroll + Top10perc + Top25perc + F.Undergrad + P.Undergrad + Room.Board + Books + Personal + PhD + Terminal  + S.F.Ratio + perc.alumni + Expend + Grad.Rate, data=college.train, method="anova")
+```
+
+
+First, a regression tree was created. 
+
+```{r}
+tree <- tree(Outstate ~.,data=college.train, method="anova")
+plot(tree, cex = 0.6)
+text(tree, pretty = 0, cex = 0.6)
+```
+
+Using cross-validation, the tree with the lowest deviance was found to be the tree with a size of 8. The tree was then pruned, and the MSE was calculated for the pruned tree. 
+
+```{r}
+tree.cv <- cv.tree(tree)
+tree.mindev = tree.cv$size[which.min(tree.cv$dev)]
+tree.prune = prune.tree(tree, best = tree.mindev)
+plot(tree.prune, cex = 0.6)
+text(tree.prune, pretty = 0, cex = 0.6)
+
+tree.predict = predict(tree.prune, newdata = college.test)
+MSE.tree = mean((tree.predict - college.test$Outstate)^2)
+print(MSE.tree)
+```
+
+
+```{r, include = FALSE}
+plot(tree.predict, cex = 0.6)
+text(tree, pretty = 0, cex = 0.6)
+```
+
+Then, doing the same using bagging, the MSE was calculated again. 
+
+```{r }
+tree.bag <- bagging(Outstate~.,data=college.train, nbagg=25)
+tree.bag.predict <- predict(tree.bag, college.test)
+
+MSE.bag = mean((tree.bag.predict - college.test$Outstate)^2)
+print(MSE.bag)
+```
+
+Finally, a random forest was created with the dataset. 
+
+```{r}
+tree.randomForest = randomForest(Outstate~., data = college.train, mtry =
+                                   ncol(college.train)/3, ntree = 500,importance = TRUE)
+randomForest.predict = predict(tree.randomForest, newdata = college.test)
+
+# plot(tree.randomForest)
+# text(tree.fit.randomForest, pretty=0)
+# summary(tree.randomForest)
+
+MSE.randomForest = mean((randomForest.predict - college.test$Outstate)^2)
+print(MSE.randomForest)
+```
+
+As can be seen, the MSE is lowest for the random forest model, and it is significantly lower than both the pruned regression tree, and the bagging. 
+<!-- Just about 1500 USD in actual values.  -->
+This is most probably because of the decorrelated trees. Bagging was better than regression trees
+
+## c) 
+
+<!-- Compare the results (tests MSEs) among all the methods you used in Problems 1-3. Which method perform best in terms of prediction error? Which method would you choose if the aim is to develop an interpretable model? -->
+
+In terms of prediction error, the best model is by far the random forest, compared to the others used. However, if the goal is to develop an interpretable model, the model chosen would probably be the pruned regression tree, as this requires the least statistical knowledge. This has a higher MSE, but this might be a worth trade-off for the added interpretability. 
+
+
+# Problem 4
 
 <!-- We will use the classical data set of _diabetes_ from a population of women of Pima Indian heritage in the US, available in the R `MASS` package. The following information is available for each woman: -->
 
@@ -342,7 +452,7 @@ attach(d.train)
 ```
 
 
-## a) (2P) - Multiple choice
+## a) Multiple choice
 
 <!-- Start by getting to know the _training data_, by producing summaries and plots. Which of the following statements are true, which false? -->
 
@@ -355,11 +465,10 @@ attach(d.train)
 summary(d.train)
 str(d.train)
 plot(d.train$glu,d.train$bmi,col = d.train$diabetes, xlab = "Glucose", ylab = "BMI")
-legend('topright',legend= c("not diabetes", "diabetes"), col = c(1,2),pch = 19)
+legend("topright",legend= c("not diabetes", "diabetes"), col = c(1,2),pch = 19)
 plot(d.train$bmi,d.train$skin)
 max(d.train$npreg)
 hist(d.train$npreg)
-
 ```
 
  (i) TRUE
@@ -367,7 +476,8 @@ hist(d.train$npreg)
  (iii) TRUE
  (iv) TRUE
 
-## b) (4P) 
+## b) 
+
 <!-- Fit a support vector classifier (linear boundary) and a support vector machine (radial boundary) to find good functions that predict the diabetes status of a patient. Use cross-validation to find a good cost parameter (for the linear boundary) and a good combination of cost _and_ $\gamma$ parameters (for the radial boundary). Report the confusion tables and misclassification error rates for the test set in both cases. Which classifier do you prefer and why? -->
 <!-- (Do not use any variable transformations or standardizations to facilitate correction). -->
 
@@ -379,7 +489,6 @@ First, we convert the variables to factors, and fit a support vector classifier 
 d.train$diabetes <- as.factor(d.train$diabetes)
 d.test$diabetes <- as.factor(d.test$diabetes)
 library(e1071)
-set.seed(1)
 
 svm.linear = tune(svm,diabetes~.,data=d.train,kernel="linear", 
                   ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100)))
@@ -404,7 +513,6 @@ svm.radial = tune(svm,diabetes~.,data=d.train,kernel="radial",
 svm.radial.pred  = predict(svm.radial$best.model,d.test)
 svm.radial.table = table(predict=svm.radial.pred, truth = d.test$diabetes)
 svm.radial.error = sum(svm.radial.table[2:3]) / sum(svm.radial.table)
-
 ```
 
 The confusion table and the misclassification error rate is: 
@@ -417,7 +525,7 @@ svm.radial.error
 Comparing these two, the misclassification error rate is actually identical for the given test set, but there are some differences in the confusion matrices. There are more negative predictions in the radial model, both true and false negatives, 3 more on each. This is interesting, and shows the difference between the two types of boundaries and the impact a difference in cost and $\gamma$ gives. For the given data, the preferred model would probably be the linear one, as this is both simpler, and gives a higher number of true positives. In the case of diabetes, misclassification in the form of false positives is better than false negatives, in our opinion. 
 
 
-## c) (2P)
+## c) 
 
 <!-- Compare the performance of the two classifiers from b) to _one other classification method_ that you have learned about in the course. Explain your choice and report the confusion table and misclassification error rate on the test set for your chosen method and interpret what you see. What are advantages/disadvantages of your chosen method with respect to SVMs? -->
 
@@ -473,7 +581,7 @@ qda.error
 ```
 
 
-## d) (2P) - Multiple choice
+## d) Multiple choice
 
 <!-- Which of the following statements are true, which false?  -->
 
@@ -487,7 +595,7 @@ qda.error
  (iii) TRUE
  (iv) TRUE
 
-## e) (2P) Link to logistic regression and hinge loss.
+## e) Link to logistic regression and hinge loss.
 
 Look at slides 71-73 of Module 9. Show that the loss function
 $$ \log(1+\exp(-y_i f({\boldsymbol x}_i))) $$
@@ -509,59 +617,124 @@ In logistic regression, the observations contribute by a weight $p_i(1-p_i)$, so
 $$ f({\boldsymbol x}_i) = \log(\frac{p_i}{1-p_i}) $$
 This means that the loss function $$ \log(1 + exp(-y_if({\boldsymbol x}_i)) $$ is the deviance for the $y=-1,1$ encoding in a logistic regression model. 
 
-Set er der jddjuddu
 
-# Problem 5 (10P)
+# Problem 5 
 
-The following dataset consists of 40 tissue samples with measurements of 1,000 genes. The first 20 tissues come from healthy patients and the remaining 20 come from a diseased patient group. The following code loads the dataset into your session with row names describing if the tissue comes from a diseased or healthy person.
+<!-- The following dataset consists of 40 tissue samples with measurements of 1,000 genes. The first 20 tissues come from healthy patients and the remaining 20 come from a diseased patient group. The following code loads the dataset into your session with row names describing if the tissue comes from a diseased or healthy person. -->
 
-```{r, eval = T}
-# id <- "1VfVCQvWt121UN39NXZ4aR9Dmsbj-p9OU" # google file ID
-# GeneData <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id),header=F)
-# colnames(GeneData)[1:20] = paste(rep("H", 20), c(1:20), sep = "")
-# colnames(GeneData)[21:40] = paste(rep("D", 20), c(1:20), sep = "")
-# # row.names(GeneData) = paste(rep("G", 1000), c(1:1000), sep = "")
+```{r, echo = F}
+library(dendextend)
+id <- "1VfVCQvWt121UN39NXZ4aR9Dmsbj-p9OU" # google file ID
+GeneData <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id),header=F)
+colnames(GeneData)[1:20] = paste(rep("H", 20), c(1:20), sep = " ")
+colnames(GeneData)[21:40] = paste(rep("D", 20), c(1:20), sep = " ")
+row.names(GeneData) = paste(rep("G", 1000), c(1:1000), sep = "")
+GeneData <- t(GeneData)
 ```
 
 
-## a) (2P) 
+## a) 
 
-Perform hierarchical clustering with complete, single and average linkage using __both__ Euclidean distance and correlation-based distance on the dataset. Plot the dendograms. Hint: You can use `par(mfrow=c(1,3))` to plot all three dendograms on one line or `par(mfrow=c(2,3))` to plot all six together.
-
-
-
-## b) (2P)
-
-Use these dendograms to cluster the tissues into two groups. Compare the groups with respect to the patient group the tissue comes from. Which linkage and distance measure performs best when we know the true state of the tissue?
+<!-- Perform hierarchical clustering with complete, single and average linkage using __both__ Euclidean distance and correlation-based distance on the dataset. Plot the dendograms. Hint: You can use `par(mfrow=c(1,3))` to plot all three dendograms on one line or `par(mfrow=c(2,3))` to plot all six together. -->
  
+Performing hierarchical clustering with both correlation and euclidian distance metrics. 
 
-## c) (1P)
+```{r }
+hc.complete = hclust(dist(GeneData, method = "euclidean", diag = FALSE, upper = FALSE, 
+                          p = 2), method ="complete")
+hc.single = hclust(dist(GeneData, method = "euclidean", diag = FALSE, upper = FALSE, 
+                        p = 2), method ="single")
+hc.average = hclust(dist(GeneData, method = "euclidean"), method = "average")  
 
-With Principal Component Analysis, the first principal component loading vector solves the following optimization problem,
+dd = as.dist(cor(t(GeneData))) 
+
+corr.comp <- hclust(dd, method ="complete")
+corr.av <- hclust(dd, method ="average")
+corr.single <- hclust(dd, method ="single")
+```
+
+
+```{r, fig.width=6, fig.height=5, echo=F}
+par(mfrow=c(2,3), cex =  0.5)
+plot(corr.comp, main="Complete Linkage, correlated", xlab="", sub ="")
+plot(corr.single, main="Single Linkage, correlated", xlab="", sub ="")
+plot(corr.av, main="Average Linkage, correlated", xlab="", sub ="")
+
+plot(hc.complete, main="Complete Linkage, euclidian", xlab="",sub ="")
+plot(hc.single, main="Single Linkage, euclidian", xlab="",sub ="")
+plot(hc.average, main="Average Linkage, euclidian", xlab="",sub ="")
+
+```
+
+
+## b)
+
+<!-- Use these dendograms to cluster the tissues into two groups. Compare the groups with respect to the patient group the tissue comes from. Which linkage and distance measure performs best when we know the true state of the tissue? -->
+
+As can be seen, the correlation based dendrogrammes are all over the place, with no clear way of classifying the samples into two classes. The euclidian distance based dendrograms however, are a different story. All of them classify the two classes perfectly, with no means of determining which one is the best. Usually, average or complete linking is better than single linking. 
+
+
+
+## c) 
+
+<!-- With Principal Component Analysis, the first principal component loading vector solves the following optimization problem, -->
 
 \begin{equation*}
 \max_{\phi_{11},...,\phi_{p1}} \Big\{ \frac{1}{n}\sum_{i=1}^n \Big( \sum_{j=1}^p \phi_{j1}x_{ij} \Big)^2  \Big\} \quad \text{subject to } \sum_{j=1}^p\phi_{j1}^2 = 1.
 \end{equation*}
 
-Explain what $\phi$, $p$, $n$ and $x$ are in this optimization problem and write down the formula for the first principal component scores.
+<!-- Explain what $\phi$, $p$, $n$ and $x$ are in this optimization problem and write down the formula for the first principal component scores. -->
+
+$\phi$ is the weight, while $X$ is the variable. $P$ is the number of elements in the principal components, while $n$ is the number of samples, or more specifically, the number of principal components. 
+
+The principal component score of the first principal component can be expressed as: $$z_1=\sum^{n}_{i=1}\sum^p_{j=1} \phi_{j1}X_{ij}$$
+
+## d) 
+
+### (i) 
+(1P) Use PCA to plot the samples in two dimensions. Color the samples based on the tissues group of patients.
+
 
  
+```{r}
+pca = prcomp(GeneData, scale=TRUE)
+biplot(pca, scale = 0, cex = 0.4)
+```
 
 
-## d) (2P)
+```{r, fig.width=6, fig.height=3}
+par(mfrow=c(1,2), cex = 0.6)
+pca.var = pca$sdev^2
+pve = pca.var/sum(pca.var)
 
-(i) (1P) Use PCA to plot the samples in two dimensions. Color the samples based on the tissues group of patients. 
-(ii) (1P) How much variance is explained by the first 5 PCs?
- 
+plot(pve, xlab="Principal Component", ylab="Proportion of Variance Explained",
+     ylim=c(0,1),type='b')
+points(5,pve[5], col="black",cex=2,pch=20)
+plot(cumsum(pve), xlab="Principal Component", 
+     ylab="Cumulative Proportion of Variance Explained", 
+     ylim=c(0,1),type='b')
+points(5,cumsum(pve)[5], col="black",cex=2,pch=20)
+print(cumsum(pca.var[1:5]))
 
-## e) (1P)
+```
+
+### (ii) 
+<!-- (1P) How much variance is explained by the first 5 PCs? -->
+We can see that the 5 first principal components stand for 21% of the total variance. 
+
+
+## e) 
 
 Use your results from PCA to find which genes that vary the most across the two groups.
- 
 
+The genes that show most variance across the 
 
-## f) (2P)
+## f) 
 
 Use K-means to separate the tissue samples into two groups. Plot the values in a two-dimensional space with PCA. What is the error rate of K-means?
 
+```{r }
+km <- kmeans(GeneData, 2, nstart=20)
+plot(pca$x[,1:2], col=km$cluster, pca=c(GeneData[1:20], GeneData[21:40]))
+```
 

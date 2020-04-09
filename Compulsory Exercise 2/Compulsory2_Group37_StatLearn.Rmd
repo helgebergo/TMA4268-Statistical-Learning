@@ -227,11 +227,11 @@ y_i =
 \begin{cases}
  \beta_{01} + \beta_{11} x_i + \beta_{21} x_i^2 + \beta_{31} x^3_i +\epsilon_i 
 &\text{if} \hspace{0.5mm}-\infty\leq x \geq q_1\\
-\beta_{02}+\beta_{12}x_i+\beta_{22}x_i^2+\beta_{32}x^3_i+\epsilon_i +(x-q_1) 
+\beta_{02}+\beta_{12}x_i+\beta_{22}x_i^2+\beta_{32}x^3_i+\epsilon_i +(x-q_1)^3 
 &\text{if} \hspace{5mm}q_1\leq x \geq q_2 \\
-\beta_{03}+\beta_{13}x_i+\beta_{23}x_i^2+\beta_{33}x^3_i+\epsilon_i + (x-q_2) 
+\beta_{03}+\beta_{13}x_i+\beta_{23}x_i^2+\beta_{33}x^3_i+\epsilon_i + (x-q_2)^3 
 &\text{if} \hspace{5mm}q_2\leq x \geq q_3 \\
-\beta_{02}+\beta_{12}x_i+\beta_{22}x_i^2 + \beta_{32}x^3_i+\epsilon_i  
+\beta_{02}+\beta_{12}x_i+\beta_{22}x_i^2 + \beta_{32}x^3_i+\epsilon_i +(x-q_3)^3  
 &\text{if} \hspace{5mm}q_3\leq x \geq \infty
 \end{cases}
 \end{equation*}
@@ -254,7 +254,7 @@ y_i =
 &\text{if} \hspace{5mm}q_1\leq x \geq q_2 \\
 \beta_{03}+\beta_{13}B_1/x_i)+\beta_{23}B_2(x_i)+\beta_{33}B_3(x_i)+\epsilon_i +B_4(x, \zeta) 
 &\text{if} \hspace{5mm}q_2\leq x \geq q_3 \\
-\beta_{02}+\beta_{12}B_1(x_i)+\beta_{22}B_2(x_i)+\beta_{32}B_3(x_i)+\epsilon_i
+\beta_{02}+\beta_{12}B_1(x_i)+\beta_{22}B_2(x_i)+\beta_{32}B_3(x_i)+\epsilon_i +B_4(x, \zeta)
 &\text{if} \hspace{5mm}q_3\leq x \geq \infty
 \end{cases}
 \end{equation*}
@@ -671,11 +671,11 @@ qda.error
 
 ## e) Link to logistic regression and hinge loss.
 
-Look at slides 71-73 of Module 9. Show that the loss function
-$$ \log(1+\exp(-y_i f({\boldsymbol x}_i))) $$
+<!-- Look at slides 71-73 of Module 9. Show that the loss function -->
+<!-- $$ \log(1+\exp(-y_i f({\boldsymbol x}_i))) $$ -->
 
-is the deviance for the $y=-1,1$ encoding in a logistic regression model.  
-**Hint**: $f({\boldsymbol x}_i)$ corresponds to the linear predictor in the logistic regression approach.
+<!-- is the deviance for the $y=-1,1$ encoding in a logistic regression model.   -->
+<!-- **Hint**: $f({\boldsymbol x}_i)$ corresponds to the linear predictor in the logistic regression approach. -->
 
 Using $f({\boldsymbol x}_i)$ as corresponding to the linear predictor in the logistic regression approach,
 
@@ -766,10 +766,8 @@ The principal component score of the first principal component can be expressed 
 ## d) 
 
 ### (i) 
-(1P) Use PCA to plot the samples in two dimensions. Color the samples based on the tissues group of patients.
+<!-- (1P) Use PCA to plot the samples in two dimensions. Color the samples based on the tissues group of patients. -->
 
-
- 
 ```{r}
 pca = prcomp(GeneData, scale=TRUE)
 biplot(pca, scale = 0, cex = 0.4)
@@ -799,17 +797,17 @@ We can see that the 5 first principal components stand for 21% of the total vari
 
 ## e) 
 
-Use your results from PCA to find which genes that vary the most across the two groups.
+<!-- Use your results from PCA to find which genes that vary the most across the two groups. -->
 
 In order to find the genes that vary the most across one can perform PCA on the untransposed dataset GeneData. The Principal Components that have the most variance would be the genes that vary the most. 
+
 ```{r }
 tr.genedata <- t(GeneData)
 pca.gene = prcomp(tr.genedata, scale=TRUE)
 gene <- pca.gene$rotation[,1]
-gene2 <- abs(gene)
-gene3 <- sort(gene2, decreasing = TRUE)
-print(names(gene3[1:5]))
-
+gene_abs <- abs(gene)
+gene_sorted <- sort(gene_abs, decreasing = TRUE)
+print(names(gene_sorted[1:5]))
 
 ```
 Thus, the 5 genes that contribute most variance to PC1 are; D8, D2, D19, D14 and D1.
@@ -817,7 +815,8 @@ Thus, the 5 genes that contribute most variance to PC1 are; D8, D2, D19, D14 and
 
 ## f) 
 
-Use K-means to separate the tissue samples into two groups. Plot the values in a two-dimensional space with PCA. What is the error rate of K-means?
+<!-- Use K-means to separate the tissue samples into two groups. Plot the values in a two-dimensional space with PCA. What is the error rate of K-means? -->
+K-means was used to separate the tissue samples into two groups. 
 
 ```{r }
 km <- kmeans(GeneData, 2, nstart=20)

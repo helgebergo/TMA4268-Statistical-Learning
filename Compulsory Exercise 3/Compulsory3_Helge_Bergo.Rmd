@@ -113,7 +113,8 @@ model <- keras_model_sequential() %>%
 model %>% compile(optimizer = "rmsprop", loss = "mse")
 
 # Fitting the model
-history <- model %>% fit(x.train, y.train, epochs = 300, batch_size = 8, validation_split = 0.2)
+history <- model %>% fit(x.train, y.train, epochs = 300, batch_size = 8, 
+                         validation_split = 0.2)
 str(history)
 plot(history)
 
@@ -123,6 +124,7 @@ str(model)
 
 ```
 
+The final MSE after 300 epochs was `r round(score,2)`.
 
 
 ## d) (2P)
@@ -130,7 +132,25 @@ str(model)
 Apply one of the regularization techniques you heard about in the course (easiest to use dropout or weight decay with L1/L2 norms). Does this improve the performance of the network?
 Optional: You might try your own network architecture.
 
+```{r}
+model_reg <- keras_model_sequential() %>%
+  layer_dense(units = 64, activation = "relu", input_shape = c(17), 
+              kernel_regularizer = regularizer_l2(l = 0.001)) %>%
+  layer_dropout(0.3) %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dropout(0.2) %>%
+  layer_dense(units = 1, activation = "linear")
 
+model_reg %>% compile(optimizer = "rmsprop", loss = "mse")
+
+history_reg <- model_reg %>% fit(x.train, y.train, epochs = 300, batch_size = 8, 
+                                 validation_split = 0.2)
+plot(history_reg)
+
+score_reg <- model_reg %>% evaluate(x.test, y.test)
+```
+
+The final MSE after 300 epochs was `r round(score_reg,digits = 2)`.
 
 # Problem 2 (10P)
 

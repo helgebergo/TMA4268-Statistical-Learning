@@ -4,12 +4,14 @@ author: "Helge Bergo"
 date: "12.10.20"
 #date: '`r format(Sys.time(), '%d %B, %Y')`'
 output: pdf_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, message=FALSE, warning=FALSE, strip.white=TRUE, prompt=FALSE, cache = TRUE, size="scriptsize", fig.width=4, fig.height=3, fig.align = "center")
+knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, message=FALSE, warning=FALSE, strip.white=TRUE, prompt=FALSE, cache = TRUE, size="scriptsize", fig.width=4, fig.height=4, fig.align = "center")
 ```
 
 ```{r, echo=FALSE}
@@ -35,7 +37,7 @@ library(gam)
 
 In compulsory exercise 2 we used the `College` data from the `ISLR` library, where we wanted to predict Outstate. 
 
-```{r}
+```{r, echo = FALSE}
 library(ISLR)
 library(keras)
 set.seed(1)
@@ -43,7 +45,7 @@ College$Private = as.numeric(College$Private)
 train.ind = sample(1:nrow(College), 0.5 * nrow(College))
 college.train = College[train.ind, ]
 college.test = College[-train.ind, ]
-str(College)
+# str(College)
 ```
 
 The task here is to fit densely connected neural networks using the package `keras` in order to predict `Outstate`.
@@ -65,7 +67,7 @@ std <- apply(x.train, 2, sd)
 x.train <- as.array(scale(x.train, center = mean, scale = std))
 x.test <- as.array(scale(x.test, center = mean, scale = std))
 
-str(x.train)
+# str(x.train)
 
 ```
 
@@ -87,10 +89,10 @@ y_c({\bf x})=\phi_o(\beta_{0c}+\sum_{m=1}^4 \beta_{mc}z_{m})=\phi_o(\beta_{0c}+\
 (ii) Plot the training and validation error as a function of the epochs (1P).
 (iii) Report the MSE of the test set and compare it with methods that you used in Compulsory 2 (1P).
 
-**Hints**:
+<!-- **Hints**: -->
 
-* Use the `optimizer = "rmsprop"` , `epochs=300`  and `batch_size=8` 
-* Make sure that you are caching the results (`cache=TRUE` in the knitr options), because fitting the models takes some time, and you do not want to repeat this each time you compile your file.
+<!-- * Use the `optimizer = "rmsprop"` , `epochs=300`  and `batch_size=8`  -->
+<!-- * Make sure that you are caching the results (`cache=TRUE` in the knitr options), because fitting the models takes some time, and you do not want to repeat this each time you compile your file. -->
 
 ```{r, include=FALSE}
 # train.ind = sample(1:nrow(x.train), 0.2 * nrow(x.train))
@@ -100,9 +102,9 @@ y_c({\bf x})=\phi_o(\beta_{0c}+\sum_{m=1}^4 \beta_{mc}z_{m})=\phi_o(\beta_{0c}+\
 # y.train = y.train[-train.ind]
 ```
 
+### (i)
 
-
-```{r 1c_training_network}
+```{r 1c_training_network, cache = TRUE}
 # Defining the model
 model <- keras_model_sequential() %>%
   layer_dense(units = 64, activation = "relu", input_shape = c(17)) %>%
@@ -115,30 +117,35 @@ model %>% compile(optimizer = "rmsprop", loss = "mse")
 # Fitting the model
 history <- model %>% fit(x.train, y.train, epochs = 300, batch_size = 8, 
                          validation_split = 0.2)
-str(history)
-plot(history)
-
-# Evaluation and prediction 
-score <- model %>% evaluate(x.test, y.test)
-str(model)
-
 ```
 
-The final MSE after 300 epochs was `r round(score,2)`.
+### (ii)
+
+```{r 1cplotting, fig.width=6, fig.height=4}
+plot(history)
+```
+
+### (iii)
+
+```{r 1cscore}
+score <- model %>% evaluate(x.test, y.test)
+```
+
+The final MSE after training the model for 300 epochs was `r round(score,2)`. Compared to the MSE of the methods from Compulsory 2, this is a relatively good MSE score, and it is lower than several of the methods, like forward selection, lasso, and splines, but not as low as bagging and the random forest. 
 
 
 ## d) (2P)
 
-Apply one of the regularization techniques you heard about in the course (easiest to use dropout or weight decay with L1/L2 norms). Does this improve the performance of the network?
-Optional: You might try your own network architecture.
+<!-- Apply one of the regularization techniques you heard about in the course (easiest to use dropout or weight decay with L1/L2 norms). Does this improve the performance of the network? -->
+<!-- Optional: You might try your own network architecture. -->
 
-```{r}
+```{r 1d, cache = TRUE, fig.width=6, fig.height=4}
 model_reg <- keras_model_sequential() %>%
-  layer_dense(units = 64, activation = "relu", input_shape = c(17), 
+  layer_dense(units = 64, activation = "relu", input_shape = c(17),
               kernel_regularizer = regularizer_l2(l = 0.001)) %>%
-  layer_dropout(0.3) %>%
+  layer_dropout(0.1) %>%
   layer_dense(units = 64, activation = "relu") %>%
-  layer_dropout(0.2) %>%
+  layer_dropout(0.1) %>%
   layer_dense(units = 1, activation = "linear")
 
 model_reg %>% compile(optimizer = "rmsprop", loss = "mse")
@@ -148,8 +155,10 @@ history_reg <- model_reg %>% fit(x.train, y.train, epochs = 300, batch_size = 8,
 plot(history_reg)
 
 score_reg <- model_reg %>% evaluate(x.test, y.test)
+score_both_tuned = score_reg
 ```
 
+After implementing both dropout and regularization
 The final MSE after 300 epochs was `r round(score_reg,digits = 2)`.
 
 # Problem 2 (10P)

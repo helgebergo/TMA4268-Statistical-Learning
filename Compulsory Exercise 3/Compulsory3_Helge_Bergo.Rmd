@@ -143,19 +143,19 @@ The final MSE after training the model for 300 epochs was `r round(score,2)`. Co
 model_reg <- keras_model_sequential() %>%
   layer_dense(units = 64, activation = "relu", input_shape = c(17),
               kernel_regularizer = regularizer_l2(l = 0.001)) %>%
-  layer_dropout(0.1) %>%
+  layer_dropout(0.3) %>%
   layer_dense(units = 64, activation = "relu") %>%
-  layer_dropout(0.1) %>%
+  layer_dropout(0.3) %>%
   layer_dense(units = 1, activation = "linear")
 
 model_reg %>% compile(optimizer = "rmsprop", loss = "mse")
 
 history_reg <- model_reg %>% fit(x.train, y.train, epochs = 300, batch_size = 8, 
                                  validation_split = 0.2)
-plot(history_reg)
+plot(history_reg) 
 
 score_reg <- model_reg %>% evaluate(x.test, y.test)
-score_both_tuned = score_reg
+score_drop_03_reg001 <- score_reg
 ```
 
 After implementing both dropout and regularization
@@ -176,9 +176,9 @@ In this problem, we will use a real dataset of individuals with the Covid-19 inf
 Note that the conclusions we will draw here are probably not scientifically valid, because we do not have enough information about how data were collected.
 
 Load your data into R using the following code:
-```{r}
-# id <- "1CA1RPRYqU9oTIaHfSroitnWrI6WpUeBw" # google file ID
-# d.corona <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id),header=T)
+```{r 2_loading, echo = TRUE}
+id <- "1CA1RPRYqU9oTIaHfSroitnWrI6WpUeBw" # google file ID
+d.corona <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id),header=T)
 
 ```
 

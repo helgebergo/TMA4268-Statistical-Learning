@@ -19,15 +19,10 @@ library(rmarkdown)
 library(MASS)
 library(tidyverse)
 library(ggfortify)
-# library(boot)
 library(FactoMineR)
 library(factoextra)
-library(glmnet)
-# library(tree)
 library(randomForest)
 library(gbm)
-# library(keras)
-library(pls)
 library(gam)
 ```
 
@@ -108,7 +103,7 @@ history <- model %>% fit(x.train, y.train, epochs = 300, batch_size = 8,
 <!-- (ii) Plot the training and validation error as a function of the epochs (1P). -->
 After training for 300 epochs, with 20% of the training data as the validation set, the results are plotted below. 
 
-```{r 1cplotting, fig.width=6, fig.height=4}
+```{r 1cplotting, , fig.width=5, fig.height=3}
 plot(history)
 ```
 
@@ -130,7 +125,7 @@ The final MSE after training the model for 300 epochs was `r round(score,2)`. Co
 
 Both dropout and weight decay was tried out for improving the performance of the network. 
 
-```{r 1d, cache = TRUE, fig.width=6, fig.height=4}
+```{r 1d, cache = TRUE, fig.width=5, fig.height=3}
 model_reg <- keras_model_sequential() %>%
   layer_dense(units = 64, activation = "relu", input_shape = c(17),
               kernel_regularizer = regularizer_l2(l = 0.001)) %>%
@@ -143,6 +138,10 @@ model_reg %>% compile(optimizer = "rmsprop", loss = "mse")
 
 history_reg <- model_reg %>% fit(x.train, y.train, epochs = 300, batch_size = 8, 
                                  validation_split = 0.2)
+```
+
+
+```{r 1d2, cache = TRUE, fig.width=5, fig.height=3}
 plot(history_reg) 
 
 score_reg <- model_reg %>% evaluate(x.test, y.test)
@@ -168,7 +167,6 @@ Load your data into R using the following code:
 ```{r 2_loading, echo = TRUE}
 id <- "1CA1RPRYqU9oTIaHfSroitnWrI6WpUeBw" # google file ID
 d.corona <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id), header = T)
-
 ```
 
 
@@ -181,9 +179,11 @@ d.corona <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download",
 <!--   * for each country: the number of deceased, separate for each sex.  -->
 
 
-```{r, echo = FALSE}
+```{r corona_tables, echo = FALSE}
 library(tidyverse)
 d.corona_orig <- d.corona
+# d.corona_tibble <- as_tibble(d.corona)
+# d.corona$deceased <- as.integer(d.corona$deceased)
 
 knitr::kable(
   d.corona %>%
@@ -250,11 +250,12 @@ newdat = expand.grid(age = seq(20,100,1), sex = c('male','female'), country = un
 newdat$pred = predict(glm_model, newdata = newdat, type = 'response')
 
 d.corona %>% 
-  ggplot(aes(x = age, y = deceased, color = country, lty = sex, alpha = 0.8)) +
+  ggplot(aes(x = age, y = deceased, colour = country, lty = sex, alpha = 0.8)) +
   geom_line(data = newdat, aes(y = pred), size = 0.8) +
   labs(title = "Corona risk versus age")  +
   theme(legend.position = "bottom", legend.box = 'vertical') +
-  scale_alpha(guide = 'none')
+  scale_alpha(guide = 'none') + 
+  scale_color_brewer(palette = "Set1")
 
 ```
 
@@ -365,7 +366,18 @@ d.support <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download"
 # We only look at complete cases
 d.support <- d.support[complete.cases(d.support), ]
 d.support <- d.support[d.support$totcst > 0, ]
+d.support_orig <- d.support
 ```
+
+```{r load_d.support_readr, echo = FALSE, eval = FALSE}
+# d.support_r <- read_csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
+# d.support_r$dzgroup <- parse_factor(d.support$dzgroup, levels = NULL, na = character(), include_na = TRUE)
+# d.support_r$income <- as.factor(d.support$income)
+# d.support_r$race <- as.factor(d.support$race)
+# d.support_r$scoma <- as.factor(d.support$scoma)
+
+```
+
 
 <!-- We would like to build models that help us to understand which predictors are mostly driving the total cost, but also models for prediction.  -->
 
@@ -375,27 +387,28 @@ d.support <- d.support[d.support$totcst > 0, ]
 
 
 ```{r support_histograms, fig.width = 7.5, fig.height = 4.5, echo = FALSE}
-par(mfrow = c(2,5))
+par(mfrow = c(2,4))
 attach(d.support)
 
-hist(age, main = "age")
-hist(num.co, main = "num.co")
+hist(as.numeric(age), main = "age", breaks = 10)
+# hist(as.integer(num.co), main = "num.co")
 hist(edu, main = "edu")
-hist(scoma, main = "scoma")
+# hist(scoma, main = "scoma")
 hist(totcst, main = "totcst")
 hist(meanbp, main = "meanbp")
 hist(hrt, main = "hrt")
-hist(resp, main = "resp")
+hist(as.numeric(resp), main = "resp")
 hist(temp, main = "temp")
 hist(pafi, main = "pafi")
 
 par(mfrow = c(1,1))
 ```
 
+
 A fitting transformation of the `totcst` variable is `log(totcst)`, as shown below.
 
 ```{r totcst_transformed, echo = FALSE, fig.width = 2, fig.height = 3}
-hist(log(d.support$totcst), main = "log(totcst)")
+hist(log(totcst), main = "log(totcst)")
 
 ```
 
@@ -405,39 +418,98 @@ hist(log(d.support$totcst), main = "log(totcst)")
 Fit a multiple linear regression model with the six covariates `age`, `temp`, `edu`, `resp`, `num.co` and `dzgroup` and the (transformed version of the) response `totcst`. 
 
 ```{r 3b}
+d.support$num.co <- as.integer(d.support$num.co)
 mlr_model <- lm(log(totcst) ~ age + temp + edu + resp + num.co + dzgroup, data = d.support)
-# summary(mlr_model)
-par(mfrow = c(2,2))
-plot(mlr_model)
 
 ```
 
+### (i)
+<!-- (i) How much/by which factor are the total costs expected to change when a patient's age increases by 10 years, given that all other characteristica of the patient are the same? Use the transformed respose to fit the model, but report the result on the original (back-transformed) scale of the response. (1P) -->
 
-(i) How much/by which factor are the total costs expected to change when a patient's age increases by 10 years, given that all other characteristica of the patient are the same? Use the transformed respose to fit the model, but report the result on the original (back-transformed) scale of the response. (1P)
+```{r}
+age_increase_cost <- exp(mean((mlr_model$coefficients[1] + mlr_model$coefficients[2] * 
+                     seq(30,100,10)) / 
+                    (mlr_model$coefficients[1] + mlr_model$coefficients[2] * 
+                       seq(20,90,10))))
+
+```
+
+The avereage total costs increase by a factor of `r round(age_increase_cost,2)` when the patient's age is increased by 10 years. 
+
+### (ii)
 (ii) Do a residual analysis using the Tukey-Anscombe plot and the QQ-diagram. Are the assumptions fulfilled? (1P)
+
+```{r}
+par(mfrow = c(2,2))
+# plot(mlr_model)
+library(ggfortify)
+# autoplot(lm(totcst ~ age + temp + edu + resp + num.co + dzgroup, data = d.support))
+# autoplot(lm(log(totcst) ~ age + temp + edu + resp + num.co + dzgroup, data = d.support))
+```
+
+
+### (iii)
 (iii) Does the effect of age depend on the disease group? Do a formal test and report the $p$-value. (1P)
 
+```{r}
+age_disease_model <- lm(log(totcst) ~ age*dzgroup, data = d.support)
+summary(age_disease_model)
 
+mlr_model_age <- lm(log(totcst) ~ age + dzgroup, data = d.support)
+mlr_model_age_intercept <- lm(log(totcst) ~ age + dzgroup + age*dzgroup, data = d.support)
+# anova(mlr_model_age, mlr_model_age_intercept)
 
-## c) (3P)
-
-
-In order to build a more robust model for inference and prediction of the total costs, continue using ridge regression. 
-Create a training set with 80% of the data and a test set with the remaining 20% (1P). Run cross-validation to find the largest value of $\lambda$ such that the error is within 1 standard error of the smallest $\lambda$ (1P). Report the test MSE of the ridge regression where you used the respective $\lambda$ (1P).
-
-
-Be careful: we still use the same transformation for the response as in b) -- you should report the MSE using the transformed version of `totcst` (i.e., do **not back-transform** the MSE to the original scale).
-
-
-**R-hints**:
-```{r, eval=F}
-set.seed(12345)
-# train.ind = sample(1:nrow(d.support), ... *nrow(d.support))
-# d.support.train = d.support[...,]
-# d.support.test = d.support[...,]
 ```
 
 
+
+## c)
+
+<!-- In order to build a more robust model for inference and prediction of the total costs, continue using ridge regression.  -->
+<!-- Create a training set with 80% of the data and a test set with the remaining 20% (1P). Run cross-validation to find the largest value of $\lambda$ such that the error is within 1 standard error of the smallest $\lambda$ (1P). Report the test MSE of the ridge regression where you used the respective $\lambda$ (1P). -->
+
+<!-- Be careful: we still use the same transformation for the response as in b) -- you should report the MSE using the transformed version of `totcst` (i.e., do **not back-transform** the MSE to the original scale). -->
+
+The training and test set was created, and made into a data matrix, to use the `glmnet` package. 
+
+```{r load_d.support_ridge, echo = F}
+id <- "1heRtzi8vBoBGMaM2-ivBQI5Ki3HgJTmO" # google file ID
+d.support <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id), header = T)
+# We only look at complete cases
+d.support <- d.support[complete.cases(d.support), ]
+d.support <- d.support[d.support$totcst > 0, ]
+d.support_orig <- d.support
+```
+
+
+```{r ridge_data, eval=T}
+library(glmnet)
+set.seed(12345)
+
+train.ind = sample(1:nrow(d.support), 0.8 * nrow(d.support))
+d.support.train = d.support[train.ind, ]
+d.support.test = d.support[-train.ind, ]
+x.train = model.matrix(log(totcst) ~ ., data = d.support.train)[,-1]
+y.train = log(d.support.train$totcst)
+x.test = model.matrix(log(totcst) ~ ., data = d.support.test)[,-1]
+y.test = log(d.support.test$totcst)
+```
+
+Cross-validation was run, to find the largest $\lambda$ within 1 standard error of the smallest $\lambda$. 
+
+```{r ridge_cv}
+ridge_model = cv.glmnet(x.train, y.train, alpha = 0)
+best_lambda = ridge_model$lambda.1se
+```
+
+The value of $\lambda$ was `r round(best_lambda,3)`, which was then used to find the MSE of the ridge regression. 
+
+```{r ridge_MSE}
+ridge_pred = predict(ridge_model, s = best_lambda, newx = x.test)
+ridge_MSE = mean((ridge_pred - y.test)^2)
+```
+
+The final calculated MSE is `r round(ridge_MSE,3)`. 
 
 ## d) (3P)
 
@@ -445,8 +517,23 @@ Now assume that our sole aim is prediction. In the course you heard about  _part
 
 Proceed as follows:
 
+### (i)
 (i) Run a PLS regression (don't forget to scale the variables, `scale=TRUE`) (1P).
+
+```{r pls}
+library(pls)
+plsr_model <- plsr(totcst ~ ., data = d.support.train, scale = TRUE, validation = "CV") 
+validationplot(plsr_model, val.type = "MSEP")
+
+plsr_predictions = predict(plsr_model, d.support.test, ncomp = 3)
+plsr_square_errors <- as.numeric((plsr_predictions - d.support.test$totcst)^2) 
+mean(plsr_square_errors)
+```
+
+### (ii)
 (ii) Choose an optimal number of principal components (PCs) using cross-validation (1P).
+
+### (ii)
 (iii)  Report the MSE of the test set when using the respective set of PCs and compare to the result from ridge regression. Conclusion? (1P)
 
 

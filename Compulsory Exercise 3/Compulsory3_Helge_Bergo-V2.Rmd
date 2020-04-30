@@ -72,10 +72,10 @@ x.test <- as.array(scale(x.test, center = mean, scale = std))
 
 The equation for the network to predict `Outstate`, using an input layer with the 17 predictors and a `relu` activation function for the hidden layers is: 
 
-\begin{equation}
+\begin{equation*}
 \hat{y}_1({\bf x})=\beta_{01}+\sum_{m=1}^{64} \beta_{m1}\max ( \sum_{l=1}^{64} \gamma_{lm}
 \cdot \max(\sum_{j=1}^{17} \alpha_{jl}x_j,0),0)
-\end{equation}
+\end{equation*}
 
 The activation function chosen for the output layer was the `linear` function, since this is a regression problem. 
 
@@ -153,6 +153,8 @@ score_reg <- model_reg %>% evaluate(x.test, y.test)
 
 After implementing 30% dropout for the two hidden layers, and L2 regularization for the first hidden layer, the final MSE after training was `r signif(score_reg,digits = 2)`, so lower than the unimproved network, but still not better than random forest, for example. 
 
+\pagebreak
+
 # Problem 2
 
 <!-- In this problem, we will use a real dataset of individuals with the Covid-19 infection. The data were downloaded from <https://www.kaggle.com/shirmani/characteristics-corona-patients> on 30. March 2020, and have only been cleaned for the purpose of this exercise. The dataset consists of 2010 individuals and four columns,  -->
@@ -185,8 +187,6 @@ d.corona <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download",
 ```{r corona_tables, echo = FALSE}
 library(tidyverse)
 d.corona_orig <- d.corona
-# d.corona_tibble <- as_tibble(d.corona)
-# d.corona$deceased <- as.integer(d.corona$deceased)
 
 knitr::kable(
   d.corona %>%
@@ -236,7 +236,6 @@ age_ratio <- mean((glm_model$coefficients[1] + glm_model$coefficients[3] *
                      seq(30,100,10)) / 
                     (glm_model$coefficients[1] + glm_model$coefficients[3] * 
                        seq(20,90,10)))
-
 ```
 
 
@@ -248,10 +247,13 @@ age_ratio <- mean((glm_model$coefficients[1] + glm_model$coefficients[3] *
 <!-- * Make one plot and add lines for each country/sex.  -->
 <!-- * A useful function to generate gridded data for prediction is `expand.grid()`. For example `newdata = expand.grid(sex="male",age= seq(20,100,1) ,country="France")` generates a grid for males in France over a range of ages between 20 and 100. -->
 
-```{r}
-newdat = expand.grid(age = seq(20,100,1), sex = c('male','female'), country = 
+Using `ggplot`, the probability to die of coronavirus was plotted for each sex in each country. 
+
+```{r, fig.width = 4.5, fig.height = 5}
+newdat <- expand.grid(age = seq(20,100,1), sex = c('male','female'), country = 
                        unique(d.corona$country))
-newdat$pred = predict(glm_model, newdata = newdat, type = 'response')
+newdat$pred <- glm_model %>% 
+  predict(newdata = newdat, type = 'response')
 
 d.corona %>% 
   ggplot(aes(x = age, y = deceased, colour = country, lty = sex, alpha = 0.8)) +
@@ -273,46 +275,49 @@ d.corona %>%
 <!-- Answer the questions by fitting appropriate models (1P each).  -->
 
 ### i)
-  (i) Have males generally a higher probability to die of coronavirus than females?
+  <!-- (i) Have males generally a higher probability to die of coronavirus than females? -->
 
 ```{r}
 d.corona %>% 
   glm(deceased ~ sex, data = ., family = 'binomial') %>% 
-  summary
+  summary() %>% 
+  coefficients()
 ```
 
+Yes, it seems like males have a higher probability of dying from the coronavirus than females. 
+
 ### ii)
-  (ii) Is age a greater risk factor for males than for females?
+  <!-- (ii) Is age a greater risk factor for males than for females? -->
 
 ```{r}
 d.corona %>% 
   glm(deceased ~ sex * age, data = ., family = 'binomial') %>% 
-  summary
-
+  summary() %>% 
+  coefficients()
 ```
 
-no  write more here
+Looking at the coefficients for the `sexmale:age` interaction, this is in fact negative, so this means age is not a greater risk factor for males than females. 
+
 ### iii)
-  (iii) Is age a greater risk factor for the French population than for the Korean population?
+  <!-- (iii) Is age a greater risk factor for the French population than for the Korean population? -->
 ```{r}
 d.corona %>% 
   glm(deceased ~ country * age, data = ., family = 'binomial') %>% 
-  summary
+  summary() %>% 
+  coefficients()
 ```
 
-No, but hard to tell, since the p-values are so high. 
+No, the coefficient for the Korean population interacting with age is negative, so lower than the one for France. However, the $p$-value is quite high, so it is not a clear trend in either direction. 
 
 ## e) Interpret your model 
 
-According to your model fitted in part b), it looks like the French population is at a much higher risk of dying from Covid-19 than the other countries. Do you trust this result? How could it be influenced by the way the data were collected? 
+<!-- According to your model fitted in part b), it looks like the French population is at a much higher risk of dying from Covid-19 than the other countries. Do you trust this result? How could it be influenced by the way the data were collected?  -->
 
-vg-artikkel, på måling og hva de registrerer dødsfall som. 
-lite datasett
-hvem sjekker? 
-menn mer utsatt enn damer. 
+Covid-19 is a complicated disease that without a doubt has hit the elderly population the hardest. Still, there are many differences in how different countries collect data, and especially in how a "Covid-19-death" is registered. Some countries report it a Covid-related death if the patient had Covid, regardless of what the final cause of death was, while others only count it if the actual cause of death was Covid-19. 
+In addition, the dataset is not the biggest, and the differences between number of tested vs. number of deceased is very different from country to country. For example Korea has about twice the number of deaths, but 15 times as many healthy individuals tested, that didn't die, compared to France. 
 
 
-## f) Multiple choice (2P)
+## f) Multiple choice
 
 <!-- Which of the following statements are true, which false?  -->
 
@@ -436,53 +441,59 @@ hist(log(d.support$totcst), xlab = "log(totcst)", main = "log(totcst)")
 Fit a multiple linear regression model with the six covariates `age`, `temp`, `edu`, `resp`, `num.co` and `dzgroup` and the (transformed version of the) response `totcst`. 
 
 ```{r 3b}
-mlr_model <- lm(log(totcst) ~ age + temp + edu + resp + num.co + dzgroup, data = d.support)
-
+mlr_model <- d.support %>% 
+  lm(log(totcst) ~ age + temp + edu + resp + num.co + dzgroup, data = .)
 ```
 
 ### (i)
 <!-- (i) How much/by which factor are the total costs expected to change when a patient's age increases by 10 years, given that all other characteristica of the patient are the same? Use the transformed respose to fit the model, but report the result on the original (back-transformed) scale of the response. (1P) -->
 
-```{r}
+```{r, include = FALSE}
 age_increase_cost <- exp(mlr_model$coefficients[2] * 10) 
 ```
 
-The avereage total costs increase by a factor of `r round(age_increase_cost,2)` when the patient's age is increased by 10 years. 
+The change in total costs when a patient's age is increased by 10 years is given by $$\exp(\beta_{\text{age}} \cdot 10) = \exp(`r round(mlr_model$coefficients[2],5)` \cdot 10) = `r round(exp(mlr_model$coefficients[2] * 10),3) `$$
 
-exp(Beta age) = exp( ) 0.932 
 
 ### (ii)
-(ii) Do a residual analysis using the Tukey-Anscombe plot and the QQ-diagram. Are the assumptions fulfilled? (1P)
+
+<!-- (ii) Do a residual analysis using the Tukey-Anscombe plot and the QQ-diagram. Are the assumptions fulfilled? (1P) -->
 
 ```{r residual_analysis, fig.width=6, fig.height=3}
-autoplot(mlr_model, which = 1:2)
+autoplot(mlr_model, which = 1:2, smooth.colour = NA)
 ```
 
-se på øving 1 eller 2 
-står noe om assumptions i module 2 eller 3
+First, looking at the Tukey-Anscombe plot, it seems like the fitted data follows a linear trend, with a $\text{E}(\varepsilon_i) = 0$. The variance in the residuals also seems to follow the linear trend, with only a few outliers. 
+Looking at the QQ-plot, the assumption of a normal distribution seems to be fulfilled, as nearly all points lie on the straight line of the theoretical normal distribution. 
+
+First, it is clear from the left plot that $\text{E}(\varepsilon_i) = 0$ and that the variance of $\varepsilon_i$ is within the same area for most of the data points, except a few outliers. 
+
+However, for the assumption that all $\varepsilon_i$s are independent of each other, there is signs of clustering in the fitted values, where they seem to be in two main groups, with fewer data points in the middle of the left plot. Still, it seems like all of the modelling assumptions in linear regression are fulfilled. 
+
 
 ### (iii)
-(iii) Does the effect of age depend on the disease group? Do a formal test and report the $p$-value. (1P)
 
-H0 = effect of age does not depend on the diseace group
-HA = effect of age depends on deseace group
+<!-- (iii) Does the effect of age depend on the disease group? Do a formal test and report the $p$-value. (1P) -->
+To see if the effect of age depends on the disease groups, a null hypothesis test was performed, with the following hypotheses:
 
-```{r, include = FALSE}
-mlr_model_age_vs_dz <- lm(log(totcst) ~ age + dzgroup, data = d.support)
-mlr_model_age_vs_dz_interact <- lm(log(totcst) ~ age*dzgroup, data = d.support)
-anova(mlr_model_age_vs_dz, mlr_model_age_vs_dz_interact)
+\begin{align*}
+H_0 &: \text{Effect of age does not depend on the disease group} \\
+H_1 &: \text{Effect of age depends on disease group}
+\end{align*}
 
-```
-
-```{r anova}
-mlr_model_interaction <- lm(log(totcst) ~ temp + edu + resp + num.co + 
-                              age * dzgroup, data = d.support)
-# summary(mlr_model_interaction)
+```{r anova, include = FALSE}
+mlr_model_interaction <- lm(log(totcst) ~ temp + edu + resp + num.co + age * dzgroup, 
+                            data = d.support)
 anova(mlr_model_interaction)
 ```
 
-Det er strong interaction
-p-value `r 2.02e-4`
+```{r anova_tidy}
+d.support %>% 
+  lm(log(totcst) ~ temp + edu + resp + num.co + age * dzgroup, data = .) %>% 
+  anova
+```
+
+Using the `anova` function, the `age:dzgroup`, it is clear the interaction has a significant effect, with a $p$-value of `r 2.02e-4`. This means that the null hypothesis is forfeited, and $H_1$ is correct. 
 
 ## c)
 
@@ -497,27 +508,28 @@ The training and test set was created, and made into a data matrix, to use the `
 library(glmnet)
 set.seed(12345)
 
-train.ind = sample(1:nrow(d.support), 0.8 * nrow(d.support))
-d.support.train = d.support[train.ind, ]
-d.support.test = d.support[-train.ind, ]
-x.train = model.matrix(log(totcst) ~ ., data = d.support.train)[,-1]
-y.train = log(d.support.train$totcst)
-x.test = model.matrix(log(totcst) ~ ., data = d.support.test)[,-1]
-y.test = log(d.support.test$totcst)
+train.ind <- sample(1:nrow(d.support), 0.8 * nrow(d.support))
+d.support.train <- d.support[train.ind, ]
+d.support.test <- d.support[-train.ind, ]
+x.train <- model.matrix(log(totcst) ~ ., data = d.support.train)[,-1]
+y.train <- log(d.support.train$totcst)
+x.test <- model.matrix(log(totcst) ~ ., data = d.support.test)[,-1]
+y.test <- log(d.support.test$totcst)
 ```
 
 Cross-validation was run, to find the largest $\lambda$ within 1 standard error of the smallest $\lambda$. 
 
 ```{r ridge_cv}
-ridge_model = cv.glmnet(x.train, y.train, alpha = 0)
-best_lambda = ridge_model$lambda.1se
+ridge_model <- cv.glmnet(x.train, y.train, alpha = 0)
+best_lambda <- ridge_model$lambda.1se
 ```
 
 The value of $\lambda$ was `r round(best_lambda,3)`, which was then used to find the MSE of the ridge regression. 
 
 ```{r ridge_MSE}
-ridge_pred = predict(ridge_model, s = best_lambda, newx = x.test)
-ridge_MSE = mean((ridge_pred - y.test)^2)
+ridge_pred <- ridge_model %>% 
+  predict(s = best_lambda, newx = x.test)
+ridge_MSE <- mean((ridge_pred - y.test)^2)
 ```
 
 The final calculated MSE is `r round(ridge_MSE,3)`. 
@@ -535,13 +547,13 @@ PLS regression was run, using cross-validation.
 
 ```{r pls_model}
 library(pls)
-plsr_model <- plsr(log(totcst) ~ ., data = d.support.train, scale = TRUE, 
-                   validation = "CV")
+plsr_model <- d.support.train %>% 
+  plsr(log(totcst) ~ ., data = ., scale = TRUE, validation = "CV")
 ```
 
 ### (ii)
 <!-- (ii) Choose an optimal number of principal components (PCs) using cross-validation (1P). -->
-Then the validation plot was produced, to see the optinaml number of principal components. 
+Then the validation plot was produced, to see the optimal number of principal components. 
 ```{r pls_plot, fig.height = 3.5}
 validationplot(plsr_model, val.type = "MSEP")
 ```
@@ -552,7 +564,8 @@ The number of principal components was chosen to be 4, as this is where the curv
 <!-- (iii)  Report the MSE of the test set when using the respective set of PCs and compare to the result from ridge regression. Conclusion? (1P) -->
 
 ```{r pls_pred}
-plsr_predictions <- predict(plsr_model, d.support.test, ncomp = 4)
+plsr_predictions <- plsr_model %>% 
+  predict(d.support.test, ncomp = 4)
 plsr_MSE <- mean((plsr_predictions - log(d.support.test$totcst))^2)
 ```
 
@@ -569,8 +582,11 @@ The final calculated MSE for PLS was `r round(plsr_MSE,3)`. This is just slightl
 ### (i)
 
 ```{r spline}
-gam_model <- gam(log(totcst) ~ s(age, 2) + s(temp, 6) + edu + s(resp, 7) + s(num.co,6) + dzgroup, data = d.support.train)
-gam_pred <- predict(gam_model, newdata = d.support.test)
+gam_model <- d.support.train %>% 
+  gam(log(totcst) ~ s(age, 2) + s(temp, 6) + edu + s(resp, 7) + s(num.co,6)
+                 + dzgroup, data = .)
+gam_pred <- gam_model %>% 
+  predict(newdata = d.support.test)
 gam_MSE <- mean((gam_pred - y.test)^2)
 ```
 
@@ -580,8 +596,11 @@ The GAM model was fitted using different combinations of smoothing splines for t
 ### (i)
 
 ```{r regression_trees}
-randomForest = randomForest(log(totcst) ~., data = d.support.train, mtry = ncol(d.support.train)/3, ntree = 500, importance = TRUE)
-randForest_pred <- predict(randomForest, newdata = d.support.test)
+randomForest <- d.support.train %>% 
+  randomForest(log(totcst) ~., data = ., mtry = ncol(d.support.train)/3, 
+               ntree = 500, importance = TRUE)
+randForest_pred <- randomForest %>% 
+  predict(newdata = d.support.test)
 randForest_MSE <- mean((randForest_pred - y.test)^2)
 ```
 
@@ -599,18 +618,19 @@ The basis functions for the cubic regression spline model is
 
 \begin{align*}
 &b_1 = X,\quad b_2 = X^2,\quad b_3 = X^3,\\
-&b_4 = (X-1)_+^3,\quad b_5 = (X-2)_+^3
+&b_4 = (X-1)_+^3,\quad b_5 = (X-2)_+^3,
 \end{align*}
-, and the design matrix is given below. 
 
-\begin{equation}
+and the design matrix is given below. 
+
+\begin{equation*}
 \boldsymbol X = \begin{bmatrix}
 1      & x_{1} & x_{1}^2 & x_{1}^3 & (x_{1}-1)_+^3 & (x_{1}-2)_+^3 \\
 1      & x_{2} & x_{2} & x_{2} & (x_{2}-1)_+^3 & (x_{2}-2)_+^3  \\
 \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
 1      & x_{n} & x_{n} & x_{n} & (x_{n}-1)_+^3 & (x_{n}-2)_+^3  \\
 \end{bmatrix}
-\end{equation}
+\end{equation*}
 
 
 ## b) Multiple choice 
@@ -628,12 +648,12 @@ TRUE, TRUE, TRUE, FALSE
 
 <!-- Which of the following statements are true? -->
 
-FALSE, ?, TRUE, FALSE
+FALSE, TRUE, TRUE, FALSE
 
-(i) There are large differences between the estimated standard errors, which indicates a problem with the bootstrap.
-(ii) The differences between the estimated standard errors indicate a problem with the assumptions taken about the distribution of the estimated parameters in logistic regression. 
-(iii) The `glm` function leads to too small $p$-values for the differences between countries, in particular for the differences between Indonesia and France and between Japan and France.
-(iv) The bootstrap relies on random sampling the same data without replacement.
+<!-- (i) There are large differences between the estimated standard errors, which indicates a problem with the bootstrap. -->
+<!-- g var  -->
+<!-- (iii) The `glm` function leads to too small $p$-values for the differences between countries, in particular for the differences between Indonesia and France and between Japan and France. -->
+<!-- (iv) The bootstrap relies on random sampling the same data without replacement. -->
 
 
 # Problem 5 (Multiple and single choice questions)
